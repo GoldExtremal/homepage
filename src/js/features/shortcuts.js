@@ -31,8 +31,14 @@ export function initShortcuts({
   let dragOffsetY = 0;
   let pressStartX = 0;
   let pressStartY = 0;
+  let nextReorderAllowedAt = 0;
+  const activeNeighborAnimations = new WeakMap();
+  let reorderAnimating = false;
+  let reorderUnlockTimer = null;
   const DRAG_START_THRESHOLD = 4;
   const DRAG_PREVIEW_SCALE = 1.035;
+  const REORDER_STEP_MS = 120;
+  const REORDER_ANIMATION_MS = 170;
 
   renderShortcuts();
   initShortcutsReorder();
@@ -172,10 +178,12 @@ export function initShortcuts({
       if (!tile) return;
       if (event.target.closest(".shortcut-menu-btn, .shortcut-menu")) return;
       if (!event.target.closest(".shortcut-link")) return;
+      event.preventDefault();
 
       pressedTile = tile;
       dragStarted = false;
       hasDragReordered = false;
+      nextReorderAllowedAt = 0;
       activePointerId = event.pointerId;
       pressStartX = event.clientX;
       pressStartY = event.clientY;
@@ -203,8 +211,7 @@ export function initShortcuts({
 
     event.preventDefault();
     moveFloatingTile(event.clientX, event.clientY);
-    const targetTile = getTileUnderPointer(event.clientX, event.clientY);
-    if (targetTile) swapDuringDrag(targetTile);
+    moveDuringDrag(event.clientX);
   }
 
   function handlePointerEnd(event) {
@@ -347,6 +354,7 @@ export function initShortcuts({
     window.removeEventListener("pointerup", handlePointerEnd);
     window.removeEventListener("pointercancel", handlePointerEnd);
     document.body.classList.remove("shortcuts-dragging");
+    stopNeighborAnimations();
     finishFloatingDrag();
     pressedTile = null;
     draggedTile = null;
@@ -355,61 +363,101 @@ export function initShortcuts({
     dragStarted = false;
     hasDragReordered = false;
     activePointerId = null;
+    nextReorderAllowedAt = 0;
+    reorderAnimating = false;
+    if (reorderUnlockTimer) {
+      clearTimeout(reorderUnlockTimer);
+      reorderUnlockTimer = null;
+    }
     listEl.classList.remove("drag-active");
     document.querySelectorAll(".shortcut-item.drop-target, .shortcut-item.floating-drag").forEach((node) => {
       node.classList.remove("drop-target", "floating-drag");
     });
   }
 
-  function swapDuringDrag(targetTile) {
-    if (!draggedTile || !placeholderTile || targetTile === draggedTile || targetTile === placeholderTile) return;
-    const fromIndex = Number(placeholderTile.dataset.index);
-    const nextIndex = Number(targetTile.dataset.index);
-    if (Number.isNaN(fromIndex) || Number.isNaN(nextIndex)) return;
-    if (fromIndex < 0 || nextIndex < 0 || fromIndex >= shortcuts.length || nextIndex >= shortcuts.length) return;
-    if (fromIndex === nextIndex) return;
+  function moveDuringDrag(pointerX) {
+    if (!draggedTile || !placeholderTile) return;
+    const now = performance.now();
+    if (now < nextReorderAllowedAt) return;
+    if (reorderAnimating) return;
 
-    [shortcuts[fromIndex], shortcuts[nextIndex]] = [shortcuts[nextIndex], shortcuts[fromIndex]];
-    swapNodes(placeholderTile, targetTile);
+    const fromIndex = Number(placeholderTile.dataset.index);
+    if (Number.isNaN(fromIndex) || fromIndex < 0 || fromIndex >= shortcuts.length) return;
+
+    const prevTile = getAdjacentShortcutTile(placeholderTile, -1);
+    const nextTile = getAdjacentShortcutTile(placeholderTile, 1);
+    let targetTile = null;
+    let nextIndex = fromIndex;
+
+    if (nextTile) {
+      const rect = nextTile.getBoundingClientRect();
+      if (pointerX > rect.left + rect.width * 0.6) {
+        targetTile = nextTile;
+        nextIndex = fromIndex + 1;
+      }
+    }
+
+    if (!targetTile && prevTile) {
+      const rect = prevTile.getBoundingClientRect();
+      if (pointerX < rect.left + rect.width * 0.4) {
+        targetTile = prevTile;
+        nextIndex = fromIndex - 1;
+      }
+    }
+
+    if (!targetTile) return;
+    if (nextIndex < 0 || nextIndex >= shortcuts.length) return;
+
+    stopNeighborAnimations();
+    const neighborBeforeRect = targetTile.getBoundingClientRect();
+    moveShortcutItem(fromIndex, nextIndex);
+    movePlaceholderNode(placeholderTile, targetTile, fromIndex, nextIndex);
+    placeholderTile.dataset.index = String(nextIndex);
     updateShortcutIndexes();
-    getShortcutTiles().forEach((tile) => tile.classList.remove("drop-target"));
-    targetTile.classList.add("drop-target");
+    animateNeighborShift(targetTile, neighborBeforeRect);
     hasDragReordered = true;
+    nextReorderAllowedAt = now + REORDER_STEP_MS;
+    reorderAnimating = true;
+    if (reorderUnlockTimer) clearTimeout(reorderUnlockTimer);
+    reorderUnlockTimer = setTimeout(() => {
+      reorderAnimating = false;
+      reorderUnlockTimer = null;
+    }, REORDER_ANIMATION_MS);
   }
 
-  function swapNodes(first, second) {
-    if (!first || !second || first === second) return;
-    const parent = first.parentNode;
-    if (!parent || parent !== second.parentNode) return;
+  function moveShortcutItem(fromIndex, toIndex) {
+    const [moved] = shortcuts.splice(fromIndex, 1);
+    shortcuts.splice(toIndex, 0, moved);
+  }
 
-    const firstNext = first.nextSibling;
-    const secondNext = second.nextSibling;
-
-    if (firstNext === second) {
-      parent.insertBefore(second, first);
+  function movePlaceholderNode(placeholder, target, fromIndex, toIndex) {
+    const parent = placeholder.parentNode;
+    if (!parent || parent !== target.parentNode) return;
+    if (fromIndex < toIndex) {
+      parent.insertBefore(placeholder, target.nextSibling);
       return;
     }
-    if (secondNext === first) {
-      parent.insertBefore(first, second);
-      return;
-    }
-
-    parent.insertBefore(first, secondNext);
-    parent.insertBefore(second, firstNext);
+    parent.insertBefore(placeholder, target);
   }
 
   function updateShortcutIndexes() {
-    getShortcutTiles().forEach((node, idx) => {
+    getRealShortcutTiles().forEach((node, idx) => {
       node.dataset.index = String(idx);
     });
   }
 
-  function getTileUnderPointer(clientX, clientY) {
-    const pointNode = document.elementFromPoint(clientX, clientY);
-    if (!(pointNode instanceof Element)) return null;
-    const tile = pointNode.closest(".shortcut-item:not(.shortcut-item-add)");
-    if (!tile || tile === draggedTile || tile === placeholderTile) return null;
-    return tile;
+  function getAdjacentShortcutTile(node, direction) {
+    let current = node;
+    while (current) {
+      current = direction > 0 ? current.nextElementSibling : current.previousElementSibling;
+      if (!current) return null;
+      if (!(current instanceof HTMLElement)) continue;
+      if (current.classList.contains("shortcut-item-add")) continue;
+      if (current.classList.contains("shortcut-placeholder")) continue;
+      if (current.classList.contains("floating-drag")) continue;
+      return current;
+    }
+    return null;
   }
 
   function finishFloatingDrag() {
@@ -449,6 +497,50 @@ export function initShortcuts({
 
   function getShortcutTiles() {
     return Array.from(listEl.querySelectorAll(".shortcut-item:not(.shortcut-item-add):not(.floating-drag)"));
+  }
+
+  function getRealShortcutTiles() {
+    return Array.from(
+      listEl.querySelectorAll(".shortcut-item:not(.shortcut-item-add):not(.floating-drag):not(.shortcut-placeholder)")
+    );
+  }
+
+  function animateNeighborShift(node, beforeRect) {
+    if (!(node instanceof HTMLElement) || !beforeRect) return;
+    const afterRect = node.getBoundingClientRect();
+    const dx = beforeRect.left - afterRect.left;
+    const dy = beforeRect.top - afterRect.top;
+    if (!dx && !dy) return;
+
+    const previous = activeNeighborAnimations.get(node);
+    if (previous) previous.cancel();
+
+    const animation = node.animate(
+      [
+        { transform: `translate3d(${dx}px, ${dy}px, 0)` },
+        { transform: "translate3d(0, 0, 0)" },
+      ],
+      {
+        duration: 170,
+        easing: "cubic-bezier(0.22, 0.61, 0.36, 1)",
+      }
+    );
+
+    const cleanup = () => {
+      if (activeNeighborAnimations.get(node) === animation) {
+        activeNeighborAnimations.delete(node);
+      }
+    };
+    animation.onfinish = cleanup;
+    animation.oncancel = cleanup;
+    activeNeighborAnimations.set(node, animation);
+  }
+
+  function stopNeighborAnimations() {
+    getRealShortcutTiles().forEach((node) => {
+      const animation = activeNeighborAnimations.get(node);
+      if (animation) animation.cancel();
+    });
   }
 
   function resetDialog() {
