@@ -93,7 +93,7 @@
         <ul id="shortcutsList" class="shortcuts" aria-label="Shortcuts"></ul>
 
         <section class="widgets-panel" aria-label="Widgets">
-          <article class="widget-card weather-widget">
+          <article class="widget-card weather-widget" data-widget-id="weather">
             <div class="widget-head">
               <h3>Погода</h3>
             </div>
@@ -109,17 +109,16 @@
             <div id="weatherContent" class="widget-content">Загружаю погоду...</div>
           </article>
 
-          <article class="widget-card currency-widget">
+          <article class="widget-card currency-widget" data-widget-id="currency">
             <div class="widget-head">
               <h3>Курсы валют</h3>
             </div>
             <div id="currencyContent" class="widget-content">Загружаю курсы...</div>
           </article>
 
-          <article class="widget-card ip-widget">
+          <article class="widget-card ip-widget" data-widget-id="ip">
             <div class="widget-head">
               <h3>IP и регион</h3>
-              <button id="refreshIpBtn" class="widget-refresh-btn" type="button" aria-label="Refresh IP">↻</button>
             </div>
             <div class="ip-graphic" aria-hidden="true">
               <svg viewBox="0 0 96 96" fill="none">

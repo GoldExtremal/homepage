@@ -27,12 +27,12 @@ const shortcuts = initShortcuts({
 });
 
 initWidgets({
+  widgetsPanelEl: document.querySelector(".widgets-panel"),
   weatherFormEl: document.getElementById("weatherForm"),
   weatherCityInputEl: document.getElementById("weatherCityInput"),
   weatherContentEl: document.getElementById("weatherContent"),
   currencyContentEl: document.getElementById("currencyContent"),
   ipContentEl: document.getElementById("ipContent"),
-  refreshIpBtnEl: document.getElementById("refreshIpBtn"),
 });
 
 document.addEventListener("click", (event) => {

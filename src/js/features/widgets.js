@@ -1,15 +1,20 @@
-import { WEATHER_CITY_KEY } from "../config/constants.js";
+import { WEATHER_CITY_KEY, WIDGETS_ORDER_KEY } from "../config/constants.js";
+
+const DRAG_PREVIEW_SCALE = 1.035;
 
 export function initWidgets({
+  widgetsPanelEl,
   weatherFormEl,
   weatherCityInputEl,
   weatherContentEl,
   currencyContentEl,
   ipContentEl,
-  refreshIpBtnEl,
 }) {
+  initWidgetsReorder();
+
   const savedCity = localStorage.getItem(WEATHER_CITY_KEY) || "Moscow";
   let lastWeatherCity = savedCity;
+  let lastWeatherQueryKey = normalizeCityQuery(savedCity);
   if (weatherCityInputEl) weatherCityInputEl.value = savedCity;
   if (weatherCityInputEl) weatherCityInputEl.placeholder = "Город";
   void loadWeather(savedCity);
@@ -26,12 +31,6 @@ export function initWidgets({
   if (weatherCityInputEl) {
     weatherCityInputEl.addEventListener("blur", () => {
       submitWeatherFromInput({ restoreOnEmpty: true });
-    });
-  }
-
-  if (refreshIpBtnEl) {
-    refreshIpBtnEl.addEventListener("click", () => {
-      void loadIpInfo();
     });
   }
 
@@ -71,6 +70,7 @@ export function initWidgets({
       if (weatherCityInputEl) {
         const cityAndCountry = [place.name, place.country].filter(Boolean).join(", ");
         weatherCityInputEl.value = cityAndCountry || place.name;
+        lastWeatherQueryKey = normalizeCityQuery(weatherCityInputEl.value);
       }
       lastWeatherCity = place.name || city;
 
@@ -157,19 +157,298 @@ export function initWidgets({
   function submitWeatherFromInput({ restoreOnEmpty }) {
     if (!weatherCityInputEl) return;
     const city = weatherCityInputEl.value.trim();
+    const cityQueryKey = normalizeCityQuery(city);
 
     if (!city) {
       if (!restoreOnEmpty) return;
       const fallbackCity = localStorage.getItem(WEATHER_CITY_KEY) || lastWeatherCity || savedCity;
       if (!fallbackCity) return;
+      const fallbackQueryKey = normalizeCityQuery(fallbackCity);
+      if (fallbackQueryKey && fallbackQueryKey === lastWeatherQueryKey) return;
+      lastWeatherQueryKey = fallbackQueryKey;
       void loadWeather(fallbackCity);
       return;
     }
 
+    if (cityQueryKey && cityQueryKey === lastWeatherQueryKey) return;
+
     localStorage.setItem(WEATHER_CITY_KEY, city);
     lastWeatherCity = city;
+    lastWeatherQueryKey = cityQueryKey;
     void loadWeather(city);
   }
+
+  function initWidgetsReorder() {
+    if (!widgetsPanelEl) return;
+
+    applySavedWidgetsOrder();
+    updateWidgetIndexes();
+
+    let pressedCard = null;
+    let draggedCard = null;
+    let placeholderCard = null;
+    let dragStarted = false;
+    let hasReordered = false;
+    let draggedInlineStyles = null;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+    let pressStartX = 0;
+    let pressStartY = 0;
+    let activePointerId = null;
+    const DRAG_START_THRESHOLD = 4;
+
+    widgetsPanelEl.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0) return;
+      if (!(event.target instanceof Element)) return;
+
+      const card = event.target.closest(".widget-card[data-widget-id]");
+      if (!card) return;
+
+      const onHead = Boolean(event.target.closest(".widget-head"));
+      const onInteractive = Boolean(event.target.closest("input, button, a, select, textarea, label"));
+      const rect = card.getBoundingClientRect();
+      if (!onHead || onInteractive) return;
+
+      pressedCard = card;
+      dragStarted = false;
+      hasReordered = false;
+      activePointerId = event.pointerId;
+      pressStartX = event.clientX;
+      pressStartY = event.clientY;
+
+      dragOffsetX = event.clientX - rect.left;
+      dragOffsetY = event.clientY - rect.top;
+
+      event.preventDefault();
+      document.body.classList.add("widgets-dragging");
+      window.addEventListener("pointermove", handlePointerMove, { passive: false });
+      window.addEventListener("pointerup", handlePointerEnd, { passive: false });
+      window.addEventListener("pointercancel", handlePointerEnd, { passive: false });
+    });
+
+    function swapWidgetsDuringDrag(targetCard) {
+      if (!draggedCard || !placeholderCard || targetCard === draggedCard || targetCard === placeholderCard) return;
+      const fromIndex = Number(placeholderCard.dataset.index);
+      const toIndex = Number(targetCard.dataset.index);
+
+      if (Number.isNaN(fromIndex) || Number.isNaN(toIndex) || fromIndex === toIndex) return;
+
+      swapNodes(placeholderCard, targetCard);
+      updateWidgetIndexes();
+      hasReordered = true;
+
+      getWidgetCards().forEach((card) => card.classList.remove("drop-target"));
+      targetCard.classList.add("drop-target");
+    }
+
+    function clearWidgetsDragState() {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerEnd);
+      window.removeEventListener("pointercancel", handlePointerEnd);
+      document.body.classList.remove("widgets-dragging");
+      finishFloatingDrag();
+      pressedCard = null;
+      draggedCard = null;
+      placeholderCard = null;
+      dragStarted = false;
+      hasReordered = false;
+      activePointerId = null;
+      widgetsPanelEl.classList.remove("drag-active");
+      getWidgetCards().forEach((card) => card.classList.remove("dragging", "drop-target", "floating-drag"));
+    }
+
+    function handlePointerMove(event) {
+      if (activePointerId === null || event.pointerId !== activePointerId || !pressedCard) return;
+      event.preventDefault();
+
+      if (!dragStarted) {
+        const dx = event.clientX - pressStartX;
+        const dy = event.clientY - pressStartY;
+        if (Math.hypot(dx, dy) < DRAG_START_THRESHOLD) return;
+        beginDrag(pressedCard, event.clientX, event.clientY);
+      }
+
+      moveFloatingCard(event.clientX, event.clientY);
+      const targetCard = getCardUnderPointer(event.clientX, event.clientY);
+      if (targetCard) swapWidgetsDuringDrag(targetCard);
+    }
+
+    function handlePointerEnd(event) {
+      if (activePointerId === null || event.pointerId !== activePointerId) return;
+      if (dragStarted && hasReordered) persistWidgetsOrder();
+      clearWidgetsDragState();
+    }
+
+    function beginDrag(card, clientX, clientY) {
+      draggedCard = card;
+      dragStarted = true;
+      widgetsPanelEl.classList.add("drag-active");
+      startFloatingDrag(card, clientX, clientY);
+    }
+
+    function startFloatingDrag(card, clientX, clientY) {
+      const rect = card.getBoundingClientRect();
+
+      placeholderCard = document.createElement("article");
+      placeholderCard.className = "widget-card widget-placeholder";
+      placeholderCard.dataset.widgetId = card.dataset.widgetId || "";
+      placeholderCard.dataset.index = card.dataset.index || "";
+      placeholderCard.style.width = `${rect.width}px`;
+      placeholderCard.style.height = `${rect.height}px`;
+
+      card.insertAdjacentElement("afterend", placeholderCard);
+
+      draggedInlineStyles = {
+        position: card.style.position,
+        left: card.style.left,
+        top: card.style.top,
+        width: card.style.width,
+        height: card.style.height,
+        margin: card.style.margin,
+        zIndex: card.style.zIndex,
+        pointerEvents: card.style.pointerEvents,
+        transition: card.style.transition,
+        transform: card.style.transform,
+      };
+
+      card.classList.add("floating-drag");
+      card.style.position = "fixed";
+      card.style.left = "0";
+      card.style.top = "0";
+      card.style.width = `${rect.width}px`;
+      card.style.height = `${rect.height}px`;
+      card.style.margin = "0";
+      card.style.zIndex = "9999";
+      card.style.pointerEvents = "none";
+      card.style.transition = "none";
+
+      moveFloatingCard(clientX || rect.left + dragOffsetX, clientY || rect.top + dragOffsetY);
+    }
+
+    function moveFloatingCard(clientX, clientY) {
+      if (!draggedCard || !dragStarted) return;
+      const x = Math.round((clientX || 0) - dragOffsetX);
+      const y = Math.round((clientY || 0) - dragOffsetY);
+      draggedCard.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${DRAG_PREVIEW_SCALE})`;
+    }
+
+    function finishFloatingDrag() {
+      if (!draggedCard) {
+        if (placeholderCard) {
+          placeholderCard.remove();
+          placeholderCard = null;
+        }
+        return;
+      }
+
+      if (placeholderCard?.parentNode) {
+        placeholderCard.parentNode.insertBefore(draggedCard, placeholderCard);
+        placeholderCard.remove();
+      }
+      placeholderCard = null;
+
+      const saved = draggedInlineStyles || {};
+      draggedCard.classList.remove("floating-drag");
+      draggedCard.style.position = saved.position || "";
+      draggedCard.style.left = saved.left || "";
+      draggedCard.style.top = saved.top || "";
+      draggedCard.style.width = saved.width || "";
+      draggedCard.style.height = saved.height || "";
+      draggedCard.style.margin = saved.margin || "";
+      draggedCard.style.zIndex = saved.zIndex || "";
+      draggedCard.style.pointerEvents = saved.pointerEvents || "";
+      draggedCard.style.transition = saved.transition || "";
+      draggedCard.style.transform = saved.transform || "";
+      draggedInlineStyles = null;
+      updateWidgetIndexes();
+    }
+
+    function getCardUnderPointer(clientX, clientY) {
+      const element = document.elementFromPoint(clientX, clientY);
+      if (!(element instanceof Element)) return null;
+      const card = element.closest(".widget-card[data-widget-id]");
+      if (!card || card === draggedCard) return null;
+      return card;
+    }
+  }
+
+  function applySavedWidgetsOrder() {
+    if (!widgetsPanelEl) return;
+    const cards = getWidgetCards();
+    if (!cards.length) return;
+
+    const savedOrder = readSavedWidgetsOrder();
+    if (!savedOrder.length) return;
+
+    const byId = new Map(cards.map((card) => [card.dataset.widgetId, card]));
+    const currentIds = cards.map((card) => card.dataset.widgetId).filter(Boolean);
+    const orderedIds = [...savedOrder.filter((id) => byId.has(id)), ...currentIds.filter((id) => !savedOrder.includes(id))];
+
+    orderedIds.forEach((id) => {
+      const card = byId.get(id);
+      if (card) widgetsPanelEl.appendChild(card);
+    });
+  }
+
+  function readSavedWidgetsOrder() {
+    try {
+      const raw = localStorage.getItem(WIDGETS_ORDER_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed.filter((value) => typeof value === "string" && value.length);
+    } catch {
+      return [];
+    }
+  }
+
+  function persistWidgetsOrder() {
+    if (!widgetsPanelEl) return;
+    const order = getWidgetCards()
+      .map((card) => card.dataset.widgetId)
+      .filter(Boolean);
+    localStorage.setItem(WIDGETS_ORDER_KEY, JSON.stringify(order));
+  }
+
+  function updateWidgetIndexes() {
+    getWidgetCards().forEach((card, index) => {
+      card.dataset.index = String(index);
+    });
+  }
+
+  function getWidgetCards() {
+    if (!widgetsPanelEl) return [];
+    return Array.from(widgetsPanelEl.querySelectorAll(".widget-card[data-widget-id]:not(.floating-drag)"));
+  }
+}
+
+function swapNodes(first, second) {
+  if (!first || !second || first === second) return;
+  const parent = first.parentNode;
+  if (!parent || parent !== second.parentNode) return;
+
+  const firstNext = first.nextSibling;
+  const secondNext = second.nextSibling;
+
+  if (firstNext === second) {
+    parent.insertBefore(second, first);
+    return;
+  }
+
+  if (secondNext === first) {
+    parent.insertBefore(first, second);
+    return;
+  }
+
+  parent.insertBefore(first, secondNext);
+  parent.insertBefore(second, firstNext);
+}
+
+function normalizeCityQuery(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
 }
 
 async function geocodeCity(city) {
