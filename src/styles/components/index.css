@@ -62,7 +62,8 @@
   border: 0;
   background: transparent;
   color: #2f3b52;
-  display: flex;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
   align-items: center;
   gap: 10px;
   padding: 0 16px;
@@ -74,6 +75,29 @@
 .search-suggestion-item:hover,
 .search-suggestion-item.active {
   background: rgba(138, 180, 248, 0.22);
+}
+
+.search-suggestion-item-icon {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #61779f;
+  flex: 0 0 auto;
+}
+
+.search-suggestion-item-icon.is-empty {
+  visibility: hidden;
+}
+
+.search-suggestion-item-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.search-suggestion-item-text {
+  min-width: 0;
 }
 
 .shortcuts {
@@ -208,6 +232,11 @@ body.shortcuts-dragging * {
 .shortcut-item.menu-open .shortcut-menu-btn {
   opacity: 1;
   pointer-events: auto;
+}
+
+.shortcuts.drag-active .shortcut-menu-btn {
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
 .shortcut-menu-btn:hover,

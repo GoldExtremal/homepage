@@ -1,17 +1,18 @@
-import { SUGGEST_ENDPOINT } from "../config/constants.js";
+import { SEARCH_HISTORY_KEY, SEARCH_HISTORY_LIMIT, SUGGEST_ENDPOINT } from "../config/constants.js";
 import { looksLikeUrl, normalizeUrl } from "../utils/url.js";
 
 export function initSearch({ formEl, inputEl, suggestionsEl }) {
   let suggestionTimer = null;
   let activeSuggestionIndex = -1;
   let currentSuggestions = [];
+  let searchHistory = readSearchHistory();
   let suggestRequestId = 0;
   let activeSuggestCleanup = null;
 
   formEl.addEventListener("submit", (event) => {
     event.preventDefault();
     if (activeSuggestionIndex >= 0 && activeSuggestionIndex < currentSuggestions.length) {
-      runSearch(currentSuggestions[activeSuggestionIndex]);
+      runSearch();
       return;
     }
     runSearch();
@@ -19,6 +20,12 @@ export function initSearch({ formEl, inputEl, suggestionsEl }) {
 
   inputEl.addEventListener("input", () => {
     queueSuggestions(inputEl.value);
+  });
+
+  inputEl.addEventListener("click", () => {
+    if (!inputEl.value.trim()) {
+      showHistorySuggestions();
+    }
   });
 
   inputEl.addEventListener("keydown", (event) => {
@@ -46,9 +53,13 @@ export function initSearch({ formEl, inputEl, suggestionsEl }) {
   inputEl.focus();
 
   function runSearch(valueOverride = "") {
-    const query = (valueOverride || inputEl.value).trim();
+    const value = activeSuggestionIndex >= 0 && activeSuggestionIndex < currentSuggestions.length
+      ? currentSuggestions[activeSuggestionIndex]?.text || ""
+      : valueOverride || inputEl.value;
+    const query = String(value).trim();
     if (!query) return;
     hideSuggestions();
+    pushSearchHistory(query);
 
     if (looksLikeUrl(query)) {
       window.location.href = normalizeUrl(query);
@@ -79,12 +90,19 @@ export function initSearch({ formEl, inputEl, suggestionsEl }) {
     }
 
     try {
-      const clean = await fetchGoogleSuggestionsJsonp(query, requestId);
+      const googleItems = await fetchGoogleSuggestionsJsonp(query, requestId);
       if (requestId !== suggestRequestId) return;
-      renderSuggestions(clean);
+      const historyItems = getHistoryMatches(query).map((text) => ({ text, source: "history" }));
+      const merged = mergeSuggestionItems(historyItems, googleItems);
+      renderSuggestions(merged);
     } catch {
       if (requestId !== suggestRequestId) return;
-      hideSuggestions();
+      const historyItems = getHistoryMatches(query).map((text) => ({ text, source: "history" }));
+      if (!historyItems.length) {
+        hideSuggestions();
+        return;
+      }
+      renderSuggestions(historyItems);
     }
   }
 
@@ -98,14 +116,30 @@ export function initSearch({ formEl, inputEl, suggestionsEl }) {
       return;
     }
 
-    items.forEach((text, index) => {
+    items.forEach((item, index) => {
       const li = document.createElement("li");
       const button = document.createElement("button");
       button.type = "button";
       button.className = "search-suggestion-item";
       button.setAttribute("role", "option");
       button.dataset.index = String(index);
-      button.textContent = text;
+      if (item.source === "history") button.classList.add("from-history");
+
+      const icon = document.createElement("span");
+      icon.className = "search-suggestion-item-icon";
+      if (item.source !== "history") icon.classList.add("is-empty");
+      icon.setAttribute("aria-hidden", "true");
+      icon.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 8v5l3 2"></path>
+          <circle cx="12" cy="12" r="8"></circle>
+        </svg>
+      `;
+      button.appendChild(icon);
+      const text = document.createElement("span");
+      text.className = "search-suggestion-item-text";
+      text.textContent = item.text;
+      button.appendChild(text);
 
       button.addEventListener("mousedown", (event) => {
         event.preventDefault();
@@ -117,7 +151,7 @@ export function initSearch({ formEl, inputEl, suggestionsEl }) {
       });
 
       button.addEventListener("click", () => {
-        runSearch(text);
+        runSearch(item.text);
       });
 
       li.appendChild(button);
@@ -130,6 +164,10 @@ export function initSearch({ formEl, inputEl, suggestionsEl }) {
     };
 
     suggestionsEl.classList.add("open");
+  }
+
+  function showHistorySuggestions() {
+    renderSuggestions(searchHistory.map((text) => ({ text, source: "history" })));
   }
 
   function syncActiveSuggestion() {
@@ -148,7 +186,17 @@ export function initSearch({ formEl, inputEl, suggestionsEl }) {
     currentSuggestions = [];
     activeSuggestionIndex = -1;
     suggestionsEl.innerHTML = "";
+    suggestionsEl.onmouseleave = null;
     suggestionsEl.classList.remove("open");
+  }
+
+  function pushSearchHistory(query) {
+    const trimmed = String(query).trim();
+    if (!trimmed) return;
+    const normalized = trimmed.toLowerCase();
+
+    searchHistory = [trimmed, ...searchHistory.filter((item) => item.toLowerCase() !== normalized)].slice(0, SEARCH_HISTORY_LIMIT);
+    localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(searchHistory));
   }
 
   function fetchGoogleSuggestionsJsonp(query, requestId) {
@@ -170,7 +218,7 @@ export function initSearch({ formEl, inputEl, suggestionsEl }) {
 
       window[callbackName] = (payload) => {
         cleanup();
-        const clean = normalizeGoogleSuggestions(payload);
+        const clean = normalizeGoogleSuggestions(payload).map((text) => ({ text, source: "google" }));
         resolve(clean);
       };
 
@@ -195,6 +243,54 @@ export function initSearch({ formEl, inputEl, suggestionsEl }) {
       })
       .filter(Boolean)
       .slice(0, 8);
+  }
+
+  function readSearchHistory() {
+    try {
+      const raw = localStorage.getItem(SEARCH_HISTORY_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed
+        .filter((item) => typeof item === "string")
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .slice(0, SEARCH_HISTORY_LIMIT);
+    } catch {
+      return [];
+    }
+  }
+
+  function getHistoryMatches(query) {
+    const normalized = String(query || "").trim().toLowerCase();
+    if (!normalized) return searchHistory.slice(0, SEARCH_HISTORY_LIMIT);
+
+    const startsWith = [];
+    const includes = [];
+    searchHistory.forEach((item) => {
+      const value = item.toLowerCase();
+      if (value.startsWith(normalized)) {
+        startsWith.push(item);
+        return;
+      }
+      if (value.includes(normalized)) includes.push(item);
+    });
+
+    return [...startsWith, ...includes].slice(0, SEARCH_HISTORY_LIMIT);
+  }
+
+  function mergeSuggestionItems(historyItems, googleItems) {
+    const merged = [];
+    const seen = new Set();
+    [...historyItems, ...googleItems].forEach((item) => {
+      const text = String(item?.text || "").trim();
+      if (!text) return;
+      const key = text.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      merged.push({ text, source: item?.source === "history" ? "history" : "google" });
+    });
+    return merged.slice(0, SEARCH_HISTORY_LIMIT);
   }
 
   return {
