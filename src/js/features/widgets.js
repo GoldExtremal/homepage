@@ -9,8 +9,9 @@ export function initWidgets({
   refreshIpBtnEl,
 }) {
   const savedCity = localStorage.getItem(WEATHER_CITY_KEY) || "Moscow";
+  let lastWeatherCity = savedCity;
   if (weatherCityInputEl) weatherCityInputEl.value = savedCity;
-  if (weatherCityInputEl) weatherCityInputEl.placeholder = "Город (можно по-русски)";
+  if (weatherCityInputEl) weatherCityInputEl.placeholder = "Город";
   void loadWeather(savedCity);
   void loadCurrency();
   void loadIpInfo();
@@ -18,10 +19,13 @@ export function initWidgets({
   if (weatherFormEl) {
     weatherFormEl.addEventListener("submit", (event) => {
       event.preventDefault();
-      const city = weatherCityInputEl.value.trim();
-      if (!city) return;
-      localStorage.setItem(WEATHER_CITY_KEY, city);
-      void loadWeather(city);
+      submitWeatherFromInput({ restoreOnEmpty: false });
+    });
+  }
+
+  if (weatherCityInputEl) {
+    weatherCityInputEl.addEventListener("blur", () => {
+      submitWeatherFromInput({ restoreOnEmpty: true });
     });
   }
 
@@ -40,6 +44,9 @@ export function initWidgets({
       const place = await geocodeCity(city);
       if (!place) {
         weatherContentEl.textContent = "Город не найден";
+        if (weatherCityInputEl?.value.trim() === "") {
+          weatherCityInputEl.value = localStorage.getItem(WEATHER_CITY_KEY) || lastWeatherCity || savedCity;
+        }
         return;
       }
 
@@ -65,6 +72,7 @@ export function initWidgets({
         const cityAndCountry = [place.name, place.country].filter(Boolean).join(", ");
         weatherCityInputEl.value = cityAndCountry || place.name;
       }
+      lastWeatherCity = place.name || city;
 
       weatherContentEl.innerHTML = `
         <div class="weather-hero">
@@ -144,6 +152,23 @@ export function initWidgets({
     } catch {
       ipContentEl.textContent = "Данные IP недоступны";
     }
+  }
+
+  function submitWeatherFromInput({ restoreOnEmpty }) {
+    if (!weatherCityInputEl) return;
+    const city = weatherCityInputEl.value.trim();
+
+    if (!city) {
+      if (!restoreOnEmpty) return;
+      const fallbackCity = localStorage.getItem(WEATHER_CITY_KEY) || lastWeatherCity || savedCity;
+      if (!fallbackCity) return;
+      void loadWeather(fallbackCity);
+      return;
+    }
+
+    localStorage.setItem(WEATHER_CITY_KEY, city);
+    lastWeatherCity = city;
+    void loadWeather(city);
   }
 }
 
