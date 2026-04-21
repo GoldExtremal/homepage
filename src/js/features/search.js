@@ -124,6 +124,11 @@ export function initSearch({ formEl, inputEl, suggestionsEl }) {
       suggestionsEl.appendChild(li);
     });
 
+    suggestionsEl.onmouseleave = () => {
+      activeSuggestionIndex = -1;
+      syncActiveSuggestion();
+    };
+
     suggestionsEl.classList.add("open");
   }
 
@@ -133,7 +138,6 @@ export function initSearch({ formEl, inputEl, suggestionsEl }) {
     if (activeSuggestionIndex < 0 || activeSuggestionIndex >= nodes.length) return;
     const activeNode = nodes[activeSuggestionIndex];
     activeNode.classList.add("active");
-    inputEl.value = currentSuggestions[activeSuggestionIndex];
   }
 
   function hideSuggestions() {
