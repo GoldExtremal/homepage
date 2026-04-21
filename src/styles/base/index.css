@@ -1,0 +1,98 @@
+:root {
+  --text: #eef2ff;
+  --muted: #a9b2c9;
+  --glass: rgba(28, 33, 48, 0.62);
+  --glass-soft: rgba(255, 255, 255, 0.07);
+  --panel: rgba(20, 25, 38, 0.78);
+  --panel-line: rgba(255, 255, 255, 0.12);
+  --search-bg: rgba(245, 248, 255, 0.9);
+  --search-text: #2f3b52;
+  --tile-bg: rgba(255, 255, 255, 0.08);
+  --tile-hover: rgba(255, 255, 255, 0.14);
+  --shadow: 0 18px 48px rgba(0, 0, 0, 0.36);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(1050px 660px at 14% -8%, rgba(58, 87, 140, 0.26), transparent 60%),
+    radial-gradient(900px 580px at 86% 2%, rgba(58, 72, 128, 0.23), transparent 58%),
+    radial-gradient(860px 560px at 52% 108%, rgba(39, 67, 103, 0.2), transparent 62%),
+    linear-gradient(160deg, #111927 0%, #0f1724 46%, #0d1520 100%);
+  background-size: 118% 118%;
+  animation: bgShift 30s ease-in-out infinite;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+body::before {
+  background:
+    radial-gradient(circle at 22% 30%, rgba(126, 162, 224, 0.12), transparent 30%),
+    radial-gradient(circle at 76% 68%, rgba(114, 141, 201, 0.1), transparent 32%);
+  mix-blend-mode: soft-light;
+  animation: glowDrift 14s ease-in-out infinite;
+}
+
+body::after {
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.045) 0.5px, transparent 0.5px),
+    radial-gradient(rgba(0, 0, 0, 0.08) 0.5px, transparent 0.5px);
+  background-size: 4px 4px, 7px 7px;
+  background-position: 0 0, 1px 1px;
+  opacity: 0.06;
+  animation: grainShift 10s steps(14, end) infinite;
+}
+
+@keyframes bgShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes glowDrift {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-2%, 1.5%, 0) scale(1.03); }
+  100% { transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes grainShift {
+  0% { transform: translate3d(0, 0, 0); }
+  25% { transform: translate3d(-0.3%, 0.2%, 0); }
+  50% { transform: translate3d(0.2%, -0.25%, 0); }
+  75% { transform: translate3d(-0.15%, -0.1%, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
