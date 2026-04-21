@@ -66,15 +66,17 @@ body.widgets-dragging * {
 }
 
 .widget-placeholder {
-  opacity: 0.32;
-  border-color: rgba(138, 180, 248, 0.34);
+  opacity: 0;
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  pointer-events: none;
 }
 
 .widget-card.drop-target {
-  border-color: rgba(189, 204, 236, 0.2);
-  box-shadow:
-    inset 0 1px 0 rgba(230, 238, 255, 0.14),
-    0 14px 28px rgba(5, 9, 19, 0.34);
+  border-color: inherit;
+  box-shadow: inherit;
 }
 
 .widget-drag-preview {
