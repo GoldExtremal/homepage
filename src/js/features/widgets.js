@@ -12,7 +12,7 @@ export function initWidgets({
 }) {
   initWidgetsReorder();
 
-  const savedCity = localStorage.getItem(WEATHER_CITY_KEY) || "Moscow";
+  const savedCity = localStorage.getItem(WEATHER_CITY_KEY) || "Москва";
   let lastWeatherCity = savedCity;
   let lastWeatherQueryKey = normalizeCityQuery(savedCity);
   if (weatherCityInputEl) weatherCityInputEl.value = savedCity;
