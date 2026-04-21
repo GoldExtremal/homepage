@@ -28,7 +28,15 @@
 │   │   │   └── url.js
 │   │   └── main.js
 │   └── styles/
-│       └── main.css
+│       ├── main.css
+│       ├── base/
+│       │   └── index.css
+│       ├── layout/
+│       │   └── index.css
+│       ├── components/
+│       │   └── index.css
+│       └── widgets/
+│           └── index.css
 ├── index.html
 └── README.md
 ```
@@ -42,6 +50,11 @@
 - `src/js/features/appsMenu.js` — меню продуктов Google в топбаре.
 - `src/js/utils/url.js` — URL-утилиты, доменные эвристики.
 - `src/js/config/constants.js` — константы проекта.
+- `src/styles/main.css` — точка входа для CSS-слоёв (`@import`).
+- `src/styles/base/` — токены, reset и фон страницы.
+- `src/styles/layout/` — каркас и размещение крупных блоков.
+- `src/styles/components/` — переиспользуемые UI-компоненты.
+- `src/styles/widgets/` — стили нижней панели виджетов.
 
 ## Локальный запуск
 
