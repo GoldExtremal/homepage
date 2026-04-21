@@ -642,37 +642,260 @@ body.widgets-dragging * {
   text-transform: uppercase;
 }
 
-@media (max-width: 800px) {
+@media (max-width: 700px) {
   .widgets-panel {
-    --widgets-card-height: 194px;
+    --widgets-card-height: 212px;
     margin-top: 18px;
     grid-template-columns: 1fr;
-    gap: 10px;
+    width: min(100%, 460px);
+    gap: 12px;
   }
 
   .widget-card {
     min-height: var(--widgets-card-height);
     height: var(--widgets-card-height);
+    padding: 12px 12px 10px;
+    gap: 8px;
+  }
+
+  .widget-head h3 {
+    font-size: 16px;
+  }
+
+  .weather-widget .widget-form input {
+    height: 32px;
+    font-size: 14px;
   }
 
   .weather-temp {
-    font-size: 44px;
+    font-size: 42px;
   }
 
   .weather-icon {
-    font-size: 30px;
+    font-size: 28px;
   }
 
   .weather-desc,
   .weather-feels {
+    font-size: 13px;
+  }
+
+  .weather-chip {
+    min-height: 32px;
+    font-size: 13px;
+    padding: 0 10px;
+  }
+
+  .currency-row {
+    min-height: 34px;
+  }
+
+  .currency-code {
     font-size: 14px;
   }
 
+  .currency-value {
+    font-size: 16px;
+  }
+
+  .currency-delta {
+    font-size: 12px;
+    min-width: 54px;
+    height: 18px;
+  }
+
+  .ip-content-premium {
+    gap: 10px;
+    padding-right: 78px;
+  }
+
+  .ip-value {
+    font-size: 24px;
+  }
+
+  .ip-meta {
+    min-height: 30px;
+    margin-top: 8px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
 }
 
-@media (max-width: 1120px) and (min-width: 801px) {
+@media (max-width: 560px) {
   .widgets-panel {
-    --widgets-card-height: 206px;
+    --widgets-card-height: 198px;
+    gap: 10px;
+  }
+
+  .widget-card {
+    padding: 10px 10px 9px;
+  }
+
+  .widget-head h3 {
+    font-size: 15px;
+  }
+
+  .weather-temp {
+    font-size: 38px;
+  }
+
+  .weather-icon {
+    font-size: 24px;
+  }
+
+  .weather-desc,
+  .weather-feels {
+    font-size: 12px;
+  }
+
+  .weather-chip {
+    min-height: 30px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 1120px) and (min-width: 700px) {
+  .widgets-panel {
+    --widgets-card-height: 210px;
+    width: min(100%, 940px);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 20px;
+  }
+
+  .widget-card {
+    border-radius: 18px;
+    padding: 11px 11px 10px;
+    gap: 8px;
+  }
+
+  .widget-head h3 {
+    font-size: 15px;
+  }
+
+  .weather-location-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 15px;
+  }
+
+  .weather-location-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .weather-widget .widget-form {
+    gap: 8px;
+  }
+
+  .weather-widget .widget-form input {
+    height: 30px;
+    font-size: 14px;
+  }
+
+  .weather-hero {
+    gap: 10px;
+  }
+
+  .weather-hero-left {
+    gap: 6px;
+  }
+
+  .weather-temp {
+    font-size: clamp(40px, 4.3vw, 48px);
+  }
+
+  .weather-icon {
+    font-size: clamp(24px, 2.7vw, 30px);
+  }
+
+  .weather-desc {
+    font-size: clamp(13px, 1.35vw, 15px);
+  }
+
+  .weather-feels {
+    font-size: clamp(12px, 1.15vw, 13px);
+  }
+
+  .weather-stats {
+    margin-top: 6px;
+    gap: 6px;
+    display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .weather-chip {
+    min-height: 28px;
+    padding: 0 8px;
+    font-size: 12px;
+    border-radius: 12px;
+    justify-content: center;
+    white-space: nowrap;
+  }
+
+  .currency-widget {
+    padding: 10px 10px 8px;
+  }
+
+  .currency-row {
+    min-height: 33px;
+  }
+
+  .currency-symbol {
+    font-size: 19px;
+  }
+
+  .currency-code {
+    font-size: 14px;
+  }
+
+  .currency-value {
+    font-size: 16px;
+    white-space: nowrap;
+  }
+
+  .currency-delta {
+    min-width: 52px;
+    height: 17px;
+    font-size: 12px;
+    padding: 0 6px;
+    white-space: nowrap;
+  }
+
+  .currency-right {
+    gap: 6px;
+    align-items: center;
+  }
+
+  .currency-widget .widget-content .sub {
+    font-size: 10px;
+  }
+
+  .ip-content-premium {
+    gap: 8px;
+    padding-right: 58px;
+  }
+
+  .ip-value {
+    font-size: 20px;
+    letter-spacing: 0.01em;
+  }
+
+  .ip-meta {
+    min-height: 30px;
+    margin-top: 8px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  .ip-city {
+    font-size: 11px;
+  }
+
+  .ip-graphic {
+    right: 8px;
+    top: 116px;
+    width: 62px;
+    height: 62px;
   }
 }

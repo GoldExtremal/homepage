@@ -39,6 +39,13 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+@media (max-width: 699px) {
+  body {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+}
+
 body::before,
 body::after {
   content: "";
