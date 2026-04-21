@@ -1,5 +1,6 @@
 import { initAppsMenu } from "./features/appsMenu.js";
 import { initSearch } from "./features/search.js";
+import { initPageSettings } from "./features/settings.js";
 import { initShortcuts } from "./features/shortcuts.js";
 import { initWidgets } from "./features/widgets.js";
 
@@ -12,6 +13,27 @@ const search = initSearch({
 const appsMenu = initAppsMenu({
   appsWrapEl: document.querySelector(".apps-wrap"),
   appsToggleEl: document.getElementById("appsToggle"),
+});
+const appsToggleEl = document.getElementById("appsToggle");
+const settingsToggleEl = document.getElementById("settingsToggle");
+
+const settings = initPageSettings({
+  settingsWrapEl: document.querySelector(".settings-wrap"),
+  settingsMenuEl: document.getElementById("settingsMenu"),
+  settingsToggleEl,
+  shortcutsEl: document.getElementById("shortcutsList"),
+  widgetsPanelEl: document.querySelector(".widgets-panel"),
+  shortcutsToggleEl: document.getElementById("toggleShortcuts"),
+  widgetsToggleEl: document.getElementById("toggleWidgets"),
+  resetUserDataBtnEl: document.getElementById("resetUserDataBtn"),
+});
+
+appsToggleEl?.addEventListener("click", () => {
+  settings.closeSettingsMenu();
+});
+
+settingsToggleEl?.addEventListener("click", () => {
+  appsMenu.closeAppsMenu();
 });
 
 const shortcuts = initShortcuts({
@@ -42,6 +64,10 @@ document.addEventListener("click", (event) => {
     appsMenu.closeAppsMenu();
   }
 
+  if (!settings.containsTarget(event.target)) {
+    settings.closeSettingsMenu();
+  }
+
   if (!search.containsTarget(event.target)) {
     search.hideSuggestions();
   }
@@ -55,5 +81,6 @@ document.addEventListener("keydown", (event) => {
   if (event.key !== "Escape") return;
   shortcuts.closeAllMenus();
   appsMenu.closeAppsMenu();
+  settings.closeSettingsMenu();
   search.hideSuggestions();
 });
