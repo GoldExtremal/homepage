@@ -1,4 +1,4 @@
-import { DEFAULT_SHORTCUTS, SHORTCUTS_STORAGE_KEY } from "../config/constants.js";
+import { DEFAULT_SHORTCUTS, MAX_SHORTCUTS, SHORTCUTS_STORAGE_KEY } from "../config/constants.js";
 import {
   extractRootDomain,
   isValidUrl,
@@ -61,9 +61,8 @@ export function initShortcuts({
 
     if (editingIndex >= 0 && editingIndex < shortcuts.length) {
       shortcuts[editingIndex] = { name: name.slice(0, 30), url, icon };
-    } else {
+    } else if (shortcuts.length < MAX_SHORTCUTS) {
       shortcuts.push({ name: name.slice(0, 30), url, icon });
-      shortcuts = shortcuts.slice(0, 10);
     }
 
     persistShortcuts();
@@ -126,40 +125,42 @@ export function initShortcuts({
       listEl.appendChild(fragment);
     });
 
-    const addItem = document.createElement("li");
-    addItem.className = "shortcut-item shortcut-item-add";
-    addItem.innerHTML = `
-      <button class="shortcut-link" type="button" aria-label="Add shortcut">
-        <span class="shortcut-icon">+</span>
-        <span class="shortcut-label">Add shortcut</span>
-      </button>
-    `;
+    if (shortcuts.length < MAX_SHORTCUTS) {
+      const addItem = document.createElement("li");
+      addItem.className = "shortcut-item shortcut-item-add";
+      addItem.innerHTML = `
+        <button class="shortcut-link" type="button" aria-label="Add shortcut">
+          <span class="shortcut-icon">+</span>
+          <span class="shortcut-label">Add shortcut</span>
+        </button>
+      `;
 
-    addItem.querySelector("button").addEventListener("click", () => {
-      closeAllMenus();
-      if (typeof dialogEl.showModal === "function") {
-        dialogTitleEl.textContent = "Add shortcut";
-        editingIndex = -1;
-        dialogEl.showModal();
-        nameInputEl.focus();
-        return;
-      }
+      addItem.querySelector("button").addEventListener("click", () => {
+        closeAllMenus();
+        if (typeof dialogEl.showModal === "function") {
+          dialogTitleEl.textContent = "Add shortcut";
+          editingIndex = -1;
+          dialogEl.showModal();
+          nameInputEl.focus();
+          return;
+        }
 
-      const name = prompt("Shortcut name:");
-      if (!name) return;
-      const raw = prompt("Shortcut URL:");
-      if (!raw) return;
+        const name = prompt("Shortcut name:");
+        if (!name) return;
+        const raw = prompt("Shortcut URL:");
+        if (!raw) return;
 
-      const url = normalizeUrl(raw);
-      if (!isValidUrl(url)) return;
+        const url = normalizeUrl(raw);
+        if (!isValidUrl(url)) return;
+        if (shortcuts.length >= MAX_SHORTCUTS) return;
 
-      shortcuts.push({ name: name.slice(0, 30), url, icon: "" });
-      shortcuts = shortcuts.slice(0, 10);
-      persistShortcuts();
-      renderShortcuts();
-    });
+        shortcuts.push({ name: name.slice(0, 30), url, icon: "" });
+        persistShortcuts();
+        renderShortcuts();
+      });
 
-    listEl.appendChild(addItem);
+      listEl.appendChild(addItem);
+    }
   }
 
   function initShortcutsReorder() {
@@ -284,10 +285,10 @@ export function initShortcuts({
   function readShortcuts() {
     try {
       const raw = localStorage.getItem(SHORTCUTS_STORAGE_KEY);
-      if (!raw) return [...DEFAULT_SHORTCUTS];
+      if (!raw) return [...DEFAULT_SHORTCUTS].slice(0, MAX_SHORTCUTS);
 
       const parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed)) return [...DEFAULT_SHORTCUTS];
+      if (!Array.isArray(parsed)) return [...DEFAULT_SHORTCUTS].slice(0, MAX_SHORTCUTS);
 
       const cleaned = parsed
         .filter((item) => item && typeof item.name === "string" && typeof item.url === "string")
@@ -298,9 +299,9 @@ export function initShortcuts({
         }))
         .filter((item) => item.name && isValidUrl(item.url));
 
-      return cleaned.length ? cleaned : [...DEFAULT_SHORTCUTS];
+      return cleaned.length ? cleaned.slice(0, MAX_SHORTCUTS) : [...DEFAULT_SHORTCUTS].slice(0, MAX_SHORTCUTS);
     } catch {
-      return [...DEFAULT_SHORTCUTS];
+      return [...DEFAULT_SHORTCUTS].slice(0, MAX_SHORTCUTS);
     }
   }
 
