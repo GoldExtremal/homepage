@@ -37,6 +37,18 @@
   transition: background-color 0.15s ease, opacity 0.15s ease;
 }
 
+.gmail-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gmail-link img {
+  width: 17px;
+  height: 17px;
+  display: block;
+}
+
 .topbar > a:hover {
   background: rgba(255, 255, 255, 0.11);
   text-decoration: none;
