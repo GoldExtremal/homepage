@@ -95,26 +95,30 @@
         <section class="widgets-panel" aria-label="Widgets">
           <article class="widget-card weather-widget">
             <div class="widget-head">
-              <h3>Weather</h3>
+              <h3>Погода</h3>
             </div>
             <form id="weatherForm" class="widget-form" autocomplete="off">
-              <input id="weatherCityInput" type="text" placeholder="City (e.g. Moscow)" />
-              <button type="submit">Set</button>
+              <span class="weather-location-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M12 21c3.6-3.8 6-6.7 6-10a6 6 0 1 0-12 0c0 3.3 2.4 6.2 6 10Z"></path>
+                  <circle cx="12" cy="11" r="2.2"></circle>
+                </svg>
+              </span>
+              <input id="weatherCityInput" type="text" placeholder="Город (можно по-русски)" />
             </form>
-            <div id="weatherContent" class="widget-content">Loading weather…</div>
+            <div id="weatherContent" class="widget-content">Загружаю погоду...</div>
           </article>
 
           <article class="widget-card currency-widget">
             <div class="widget-head">
-              <h3>USD / RUB</h3>
-              <button id="refreshCurrencyBtn" class="widget-refresh-btn" type="button" aria-label="Refresh currency">↻</button>
+              <h3>Курсы валют</h3>
             </div>
-            <div id="currencyContent" class="widget-content">Loading exchange rate…</div>
+            <div id="currencyContent" class="widget-content">Загружаю курсы...</div>
           </article>
 
           <article class="widget-card ip-widget">
             <div class="widget-head">
-              <h3>IP & Country</h3>
+              <h3>IP и регион</h3>
               <button id="refreshIpBtn" class="widget-refresh-btn" type="button" aria-label="Refresh IP">↻</button>
             </div>
             <div class="ip-graphic" aria-hidden="true">

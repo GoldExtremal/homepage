@@ -32,7 +32,6 @@ initWidgets({
   weatherContentEl: document.getElementById("weatherContent"),
   currencyContentEl: document.getElementById("currencyContent"),
   ipContentEl: document.getElementById("ipContent"),
-  refreshCurrencyBtnEl: document.getElementById("refreshCurrencyBtn"),
   refreshIpBtnEl: document.getElementById("refreshIpBtn"),
 });
 

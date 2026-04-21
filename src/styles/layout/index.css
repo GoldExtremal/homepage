@@ -1,14 +1,17 @@
 .page {
   position: relative;
   z-index: 2;
-  min-height: 100vh;
+  min-height: 100dvh;
+  height: 100dvh;
+  overflow: hidden;
   isolation: isolate;
 }
 
 .topbar {
   position: relative;
   z-index: 200;
-  width: max-content;
+  width: fit-content;
+  max-width: calc(100% - 24px);
   margin: 22px 18px 0 auto;
   padding: 6px 8px 6px 12px;
   display: flex;
@@ -72,8 +75,9 @@
 .apps-menu {
   position: absolute;
   top: 44px;
-  right: -10px;
+  right: 0;
   width: 394px;
+  max-width: calc(100vw - 24px);
   padding: 12px;
   border-radius: 26px;
   background: #101827;
@@ -192,11 +196,11 @@
 .hero {
   position: relative;
   z-index: 1;
-  margin-top: 12vh;
+  margin-top: clamp(52px, 11vh, 112px);
   display: grid;
   justify-items: center;
   gap: 20px;
-  padding: 0 20px;
+  padding: 0 clamp(12px, 2vw, 20px) 24px;
 }
 
 .logo {
@@ -209,6 +213,19 @@
   user-select: none;
 }
 
+@media (max-width: 900px) {
+  .topbar {
+    margin: 14px 12px 0 auto;
+    padding: 5px 7px 5px 10px;
+    border-radius: 14px;
+  }
+
+  .topbar > a {
+    font-size: 14px;
+    padding: 8px 9px;
+  }
+}
+
 @media (max-width: 800px) {
   .hero {
     margin-top: 10vh;
@@ -216,7 +233,6 @@
   }
 
   .apps-menu {
-    right: -10px;
     width: min(92vw, 360px);
   }
 
