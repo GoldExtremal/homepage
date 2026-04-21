@@ -103,8 +103,40 @@
   cursor: grab;
 }
 
-.shortcut-item.dragging {
+body.shortcuts-dragging,
+body.shortcuts-dragging * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+.shortcut-item.floating-drag {
   cursor: grabbing;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transition: none !important;
+  animation: none !important;
+  will-change: transform;
+  z-index: 9999;
+}
+
+.shortcut-item.floating-drag .shortcut-link {
+  opacity: 1 !important;
+  transform: none !important;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(10px) saturate(130%);
+  -webkit-backdrop-filter: blur(10px) saturate(130%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 22px 36px rgba(5, 9, 19, 0.5) !important;
+}
+
+.shortcut-placeholder {
+  opacity: 0.32;
+}
+
+.shortcut-placeholder .shortcut-link {
+  border-color: rgba(138, 180, 248, 0.34);
 }
 
 .shortcut-link {
@@ -136,14 +168,9 @@
   transform: translateY(-4px) scale(1.05);
 }
 
-.shortcut-item.dragging .shortcut-link {
-  opacity: 0.45;
-  transform: none;
-}
-
 .shortcut-item.drop-target .shortcut-link {
-  background: rgba(138, 180, 248, 0.24);
-  border-color: rgba(138, 180, 248, 0.62);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 .shortcuts.drag-active .shortcut-item:hover .shortcut-link {

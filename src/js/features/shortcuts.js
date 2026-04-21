@@ -20,11 +20,22 @@ export function initShortcuts({
 }) {
   let shortcuts = readShortcuts();
   let editingIndex = -1;
+  let pressedTile = null;
   let draggedTile = null;
+  let placeholderTile = null;
+  let draggedInlineStyles = null;
+  let dragStarted = false;
   let hasDragReordered = false;
-  let highlightFrameId = null;
+  let activePointerId = null;
+  let dragOffsetX = 0;
+  let dragOffsetY = 0;
+  let pressStartX = 0;
+  let pressStartY = 0;
+  const DRAG_START_THRESHOLD = 4;
+  const DRAG_PREVIEW_SCALE = 1.035;
 
   renderShortcuts();
+  initShortcutsReorder();
 
   formEl.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -84,7 +95,7 @@ export function initShortcuts({
       const removeBtn = fragment.querySelector(".shortcut-action-remove");
 
       tile.dataset.index = String(index);
-      link.setAttribute("draggable", "true");
+      link.setAttribute("draggable", "false");
 
       link.href = item.url;
       label.textContent = item.name;
@@ -110,55 +121,6 @@ export function initShortcuts({
         shortcuts.splice(index, 1);
         persistShortcuts();
         renderShortcuts();
-      });
-
-      link.addEventListener("dragstart", (event) => {
-        if (event.target instanceof Element && event.target.closest(".shortcut-menu-btn, .shortcut-menu")) {
-          event.preventDefault();
-          return;
-        }
-        draggedTile = tile;
-        hasDragReordered = false;
-        listEl.classList.add("drag-active");
-        tile.classList.add("dragging");
-        closeAllMenus();
-        if (event.dataTransfer) {
-          event.dataTransfer.effectAllowed = "move";
-          event.dataTransfer.setData("text/plain", String(index));
-        }
-      });
-
-      tile.addEventListener("dragover", (event) => {
-        if (!draggedTile) return;
-        const fromIndex = Number(draggedTile.dataset.index);
-        const targetIndex = Number(tile.dataset.index);
-        event.preventDefault();
-        if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
-        if (Number.isNaN(fromIndex) || Number.isNaN(targetIndex) || fromIndex === targetIndex) {
-          queueHighlightDropTarget(event.clientX, event.clientY);
-          return;
-        }
-        swapDuringDrag(tile, event.clientX, event.clientY);
-      });
-
-      tile.addEventListener("dragleave", (event) => {
-        if (event.target !== tile) return;
-        tile.classList.remove("drop-target");
-      });
-
-      tile.addEventListener("drop", (event) => {
-        event.preventDefault();
-        persistShortcuts();
-        renderShortcuts();
-        clearDragState();
-      });
-
-      link.addEventListener("dragend", () => {
-        if (hasDragReordered) {
-          persistShortcuts();
-          renderShortcuts();
-        }
-        clearDragState();
       });
 
       listEl.appendChild(fragment);
@@ -198,6 +160,125 @@ export function initShortcuts({
     });
 
     listEl.appendChild(addItem);
+  }
+
+  function initShortcutsReorder() {
+    listEl.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0) return;
+      if (!(event.target instanceof Element)) return;
+
+      const tile = event.target.closest(".shortcut-item:not(.shortcut-item-add)");
+      if (!tile) return;
+      if (event.target.closest(".shortcut-menu-btn, .shortcut-menu")) return;
+      if (!event.target.closest(".shortcut-link")) return;
+
+      pressedTile = tile;
+      dragStarted = false;
+      hasDragReordered = false;
+      activePointerId = event.pointerId;
+      pressStartX = event.clientX;
+      pressStartY = event.clientY;
+
+      const rect = tile.getBoundingClientRect();
+      dragOffsetX = event.clientX - rect.left;
+      dragOffsetY = event.clientY - rect.top;
+
+      window.addEventListener("pointermove", handlePointerMove, { passive: false });
+      window.addEventListener("pointerup", handlePointerEnd, { passive: false });
+      window.addEventListener("pointercancel", handlePointerEnd, { passive: false });
+    });
+  }
+
+  function handlePointerMove(event) {
+    if (activePointerId === null || event.pointerId !== activePointerId || !pressedTile) return;
+
+    if (!dragStarted) {
+      const dx = event.clientX - pressStartX;
+      const dy = event.clientY - pressStartY;
+      if (Math.hypot(dx, dy) < DRAG_START_THRESHOLD) return;
+      event.preventDefault();
+      beginDrag(pressedTile, event.clientX, event.clientY);
+    }
+
+    event.preventDefault();
+    moveFloatingTile(event.clientX, event.clientY);
+    const targetTile = getTileUnderPointer(event.clientX, event.clientY);
+    if (targetTile) swapDuringDrag(targetTile);
+  }
+
+  function handlePointerEnd(event) {
+    if (activePointerId === null || event.pointerId !== activePointerId) return;
+    const shouldPersistAndRerender = dragStarted && hasDragReordered;
+    clearDragState();
+    if (shouldPersistAndRerender) {
+      persistShortcuts();
+      renderShortcuts();
+    }
+  }
+
+  function beginDrag(tile, clientX, clientY) {
+    draggedTile = tile;
+    dragStarted = true;
+    listEl.classList.add("drag-active");
+    document.body.classList.add("shortcuts-dragging");
+    closeAllMenus();
+    startFloatingDrag(tile, clientX, clientY);
+  }
+
+  function startFloatingDrag(tile, clientX, clientY) {
+    const rect = tile.getBoundingClientRect();
+
+    placeholderTile = document.createElement("li");
+    placeholderTile.className = "shortcut-item shortcut-placeholder";
+    placeholderTile.dataset.index = tile.dataset.index || "";
+    placeholderTile.style.width = `${rect.width}px`;
+    placeholderTile.style.minWidth = `${rect.width}px`;
+    placeholderTile.style.maxWidth = `${rect.width}px`;
+    placeholderTile.style.flexBasis = `${rect.width}px`;
+    placeholderTile.style.height = `${rect.height}px`;
+    placeholderTile.style.minHeight = `${rect.height}px`;
+    tile.insertAdjacentElement("afterend", placeholderTile);
+
+    draggedInlineStyles = {
+      position: tile.style.position,
+      left: tile.style.left,
+      top: tile.style.top,
+      width: tile.style.width,
+      minWidth: tile.style.minWidth,
+      maxWidth: tile.style.maxWidth,
+      flexBasis: tile.style.flexBasis,
+      height: tile.style.height,
+      minHeight: tile.style.minHeight,
+      margin: tile.style.margin,
+      zIndex: tile.style.zIndex,
+      pointerEvents: tile.style.pointerEvents,
+      transition: tile.style.transition,
+      transform: tile.style.transform,
+    };
+
+    tile.classList.add("floating-drag");
+    tile.style.position = "fixed";
+    tile.style.left = "0";
+    tile.style.top = "0";
+    tile.style.width = `${rect.width}px`;
+    tile.style.minWidth = `${rect.width}px`;
+    tile.style.maxWidth = `${rect.width}px`;
+    tile.style.flexBasis = `${rect.width}px`;
+    tile.style.height = `${rect.height}px`;
+    tile.style.minHeight = `${rect.height}px`;
+    tile.style.margin = "0";
+    tile.style.zIndex = "9999";
+    tile.style.pointerEvents = "none";
+    tile.style.transition = "none";
+
+    moveFloatingTile(clientX || rect.left + dragOffsetX, clientY || rect.top + dragOffsetY);
+  }
+
+  function moveFloatingTile(clientX, clientY) {
+    if (!draggedTile || !dragStarted) return;
+    const x = Math.round((clientX || 0) - dragOffsetX);
+    const y = Math.round((clientY || 0) - dragOffsetY);
+    draggedTile.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${DRAG_PREVIEW_SCALE})`;
   }
 
   function readShortcuts() {
@@ -261,30 +342,37 @@ export function initShortcuts({
   }
 
   function clearDragState() {
+    window.removeEventListener("pointermove", handlePointerMove);
+    window.removeEventListener("pointerup", handlePointerEnd);
+    window.removeEventListener("pointercancel", handlePointerEnd);
+    document.body.classList.remove("shortcuts-dragging");
+    finishFloatingDrag();
+    pressedTile = null;
     draggedTile = null;
+    placeholderTile = null;
+    draggedInlineStyles = null;
+    dragStarted = false;
     hasDragReordered = false;
-    if (highlightFrameId !== null) {
-      cancelAnimationFrame(highlightFrameId);
-      highlightFrameId = null;
-    }
+    activePointerId = null;
     listEl.classList.remove("drag-active");
-    document.querySelectorAll(".shortcut-item.dragging, .shortcut-item.drop-target").forEach((node) => {
-      node.classList.remove("dragging", "drop-target");
+    document.querySelectorAll(".shortcut-item.drop-target, .shortcut-item.floating-drag").forEach((node) => {
+      node.classList.remove("drop-target", "floating-drag");
     });
   }
 
-  function swapDuringDrag(targetTile, clientX, clientY) {
-    if (!draggedTile) return;
-    const fromIndex = Number(draggedTile.dataset.index);
+  function swapDuringDrag(targetTile) {
+    if (!draggedTile || !placeholderTile || targetTile === draggedTile || targetTile === placeholderTile) return;
+    const fromIndex = Number(placeholderTile.dataset.index);
     const nextIndex = Number(targetTile.dataset.index);
     if (Number.isNaN(fromIndex) || Number.isNaN(nextIndex)) return;
     if (fromIndex < 0 || nextIndex < 0 || fromIndex >= shortcuts.length || nextIndex >= shortcuts.length) return;
     if (fromIndex === nextIndex) return;
 
     [shortcuts[fromIndex], shortcuts[nextIndex]] = [shortcuts[nextIndex], shortcuts[fromIndex]];
-    swapNodes(draggedTile, targetTile);
+    swapNodes(placeholderTile, targetTile);
     updateShortcutIndexes();
-    queueHighlightDropTarget(clientX, clientY);
+    getShortcutTiles().forEach((tile) => tile.classList.remove("drop-target"));
+    targetTile.classList.add("drop-target");
     hasDragReordered = true;
   }
 
@@ -310,29 +398,56 @@ export function initShortcuts({
   }
 
   function updateShortcutIndexes() {
-    document.querySelectorAll(".shortcut-item:not(.shortcut-item-add)").forEach((node, idx) => {
+    getShortcutTiles().forEach((node, idx) => {
       node.dataset.index = String(idx);
     });
   }
 
-  function highlightDropTargetAtPoint(x, y) {
-    document.querySelectorAll(".shortcut-item.drop-target").forEach((node) => node.classList.remove("drop-target"));
-    const previousPointerEvents = draggedTile ? draggedTile.style.pointerEvents : "";
-    if (draggedTile) draggedTile.style.pointerEvents = "none";
-    const pointNode = document.elementFromPoint(x, y);
-    if (draggedTile) draggedTile.style.pointerEvents = previousPointerEvents;
-    if (!(pointNode instanceof Element)) return;
+  function getTileUnderPointer(clientX, clientY) {
+    const pointNode = document.elementFromPoint(clientX, clientY);
+    if (!(pointNode instanceof Element)) return null;
     const tile = pointNode.closest(".shortcut-item:not(.shortcut-item-add)");
-    if (tile === draggedTile) return;
-    if (tile) tile.classList.add("drop-target");
+    if (!tile || tile === draggedTile || tile === placeholderTile) return null;
+    return tile;
   }
 
-  function queueHighlightDropTarget(x, y) {
-    if (highlightFrameId !== null) cancelAnimationFrame(highlightFrameId);
-    highlightFrameId = requestAnimationFrame(() => {
-      highlightFrameId = null;
-      highlightDropTargetAtPoint(x, y);
-    });
+  function finishFloatingDrag() {
+    if (!draggedTile) {
+      if (placeholderTile) {
+        placeholderTile.remove();
+        placeholderTile = null;
+      }
+      return;
+    }
+
+    if (placeholderTile?.parentNode) {
+      placeholderTile.parentNode.insertBefore(draggedTile, placeholderTile);
+      placeholderTile.remove();
+    }
+    placeholderTile = null;
+
+    const saved = draggedInlineStyles || {};
+    draggedTile.classList.remove("floating-drag");
+    draggedTile.style.position = saved.position || "";
+    draggedTile.style.left = saved.left || "";
+    draggedTile.style.top = saved.top || "";
+    draggedTile.style.width = saved.width || "";
+    draggedTile.style.minWidth = saved.minWidth || "";
+    draggedTile.style.maxWidth = saved.maxWidth || "";
+    draggedTile.style.flexBasis = saved.flexBasis || "";
+    draggedTile.style.height = saved.height || "";
+    draggedTile.style.minHeight = saved.minHeight || "";
+    draggedTile.style.margin = saved.margin || "";
+    draggedTile.style.zIndex = saved.zIndex || "";
+    draggedTile.style.pointerEvents = saved.pointerEvents || "";
+    draggedTile.style.transition = saved.transition || "";
+    draggedTile.style.transform = saved.transform || "";
+    draggedInlineStyles = null;
+    updateShortcutIndexes();
+  }
+
+  function getShortcutTiles() {
+    return Array.from(listEl.querySelectorAll(".shortcut-item:not(.shortcut-item-add):not(.floating-drag)"));
   }
 
   function resetDialog() {
