@@ -1,4 +1,4 @@
-export function initAppsMenu({ appsWrapEl, appsToggleEl, appsMenuEl }) {
+export function initAppsMenu({ appsWrapEl, appsToggleEl, appsMenuEl, onFirstOpen }) {
   if (!appsToggleEl || !appsMenuEl) {
     return {
       closeAppsMenu() {},
@@ -8,8 +8,14 @@ export function initAppsMenu({ appsWrapEl, appsToggleEl, appsMenuEl }) {
     };
   }
 
+  let hasRendered = false;
+
   appsToggleEl.addEventListener("click", (event) => {
     event.stopPropagation();
+    if (!hasRendered && typeof onFirstOpen === "function") {
+      onFirstOpen();
+      hasRendered = true;
+    }
     const isOpen = appsMenuEl.classList.toggle("open");
     appsToggleEl.setAttribute("aria-expanded", String(isOpen));
   });

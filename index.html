@@ -4,19 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>New Tab</title>
-    <script>
-      (() => {
-        try {
-          const raw = localStorage.getItem("chrome-clone-page-settings-v1");
-          if (!raw) return;
-          const parsed = JSON.parse(raw);
-          if (parsed?.showShortcuts === false) document.documentElement.classList.add("pref-hide-shortcuts");
-          if (parsed?.showWidgets === false) document.documentElement.classList.add("pref-hide-widgets");
-        } catch {
-          // no-op
-        }
-      })();
-    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet" />
@@ -46,7 +33,7 @@
           </button>
         </div>
       </header>
-      <div id="settingsMenu" class="settings-menu" role="menu" aria-label="Page settings">
+      <div id="settingsMenu" class="overlay-menu settings-menu" role="menu" aria-label="Page settings">
         <h3>Settings</h3>
         <div class="settings-item">
           <span>Dark mode</span>
@@ -77,7 +64,7 @@
         <button id="clearWidgetsDataBtn" class="settings-action-btn" type="button">Clear widgets data</button>
         <button id="resetUserDataBtn" class="settings-reset-btn" type="button">Reset all user data</button>
       </div>
-      <div id="appsMenu" class="settings-menu apps-menu" role="menu" aria-label="Google services"></div>
+      <div id="appsMenu" class="overlay-menu apps-menu" role="menu" aria-label="Google services"></div>
       <main class="hero">
         <form id="searchForm" class="search-bar" autocomplete="off">
           <span class="s-icon" aria-hidden="true">

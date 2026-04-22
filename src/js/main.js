@@ -12,15 +12,17 @@ const search = initSearch({
 });
 
 const appsMenuEl = document.getElementById("appsMenu");
-renderGoogleServicesMenu(appsMenuEl);
+const appsToggleEl = document.getElementById("appsToggle");
+const settingsToggleEl = document.getElementById("settingsToggle");
 
 const appsMenu = initAppsMenu({
   appsWrapEl: document.querySelector(".apps-wrap"),
-  appsToggleEl: document.getElementById("appsToggle"),
+  appsToggleEl,
   appsMenuEl,
+  onFirstOpen() {
+    renderGoogleServicesMenu(appsMenuEl);
+  },
 });
-const appsToggleEl = document.getElementById("appsToggle");
-const settingsToggleEl = document.getElementById("settingsToggle");
 
 const settings = initPageSettings({
   settingsWrapEl: document.querySelector(".settings-wrap"),
