@@ -11,7 +11,9 @@
 3. Установите расширение для редиректа новой вкладки: `https://chromewebstore.google.com/detail/new-tab-redirect/icpgjfneehieebagbmdbhnlpiopdcmna`.
 4. Если перенаправление не сработало автоматически, откройте настройки расширения, вставьте ссылку `https://goldextremal.github.io/homepage/` и нажмите `Save`.
 
-![Настройка расширения New Tab Redirect](./assets/extentions.png)
+<p align="center">
+  <img src="./assets/extentions.png" alt="Настройка расширения New Tab Redirect" width="620" />
+</p>
 
 ## Стек
 
