@@ -132,7 +132,7 @@
 }
 
 .apps-menu {
-  width: 360px;
+  width: 300px;
   max-width: calc(100vw - 18px);
   height: auto;
   max-height: calc(100dvh - 90px);
@@ -474,7 +474,7 @@ html.pref-hide-widgets .widgets-panel {
   }
 
   .apps-menu {
-    width: min(320px, calc(100vw - 18px));
+    width: min(288px, calc(100vw - 18px));
     max-height: calc(100dvh - 76px);
   }
 }
@@ -486,7 +486,7 @@ html.pref-hide-widgets .widgets-panel {
   }
 
   .apps-menu {
-    width: min(92vw, 360px);
+    width: min(288px, calc(100vw - 18px));
   }
 }
 
