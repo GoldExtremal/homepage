@@ -8,6 +8,7 @@ import {
 } from "../config/constants.js";
 
 const DEFAULT_SETTINGS = {
+  theme: "dark",
   showShortcuts: true,
   showWidgets: true,
 };
@@ -20,6 +21,7 @@ export function initPageSettings({
   settingsToggleEl,
   shortcutsEl,
   widgetsPanelEl,
+  darkModeToggleEl,
   shortcutsToggleEl,
   widgetsToggleEl,
   clearSearchHistoryBtnEl,
@@ -27,7 +29,7 @@ export function initPageSettings({
   clearWidgetsDataBtnEl,
   resetUserDataBtnEl,
 }) {
-  if (!settingsWrapEl || !settingsMenuEl || !settingsToggleEl || !shortcutsToggleEl || !widgetsToggleEl) {
+  if (!settingsWrapEl || !settingsMenuEl || !settingsToggleEl || !shortcutsToggleEl || !widgetsToggleEl || !darkModeToggleEl) {
     return {
       closeSettingsMenu() {},
       containsTarget() {
@@ -46,6 +48,15 @@ export function initPageSettings({
     const isOpen = settingsMenuEl.classList.toggle("open");
     settingsWrapEl.classList.toggle("open", isOpen);
     settingsToggleEl.setAttribute("aria-expanded", String(isOpen));
+  });
+
+  darkModeToggleEl.addEventListener("change", () => {
+    settings = {
+      ...settings,
+      theme: darkModeToggleEl.checked ? "dark" : "light",
+    };
+    applySettings(settings);
+    persistSettings(settings);
   });
 
   shortcutsToggleEl.addEventListener("change", () => {
@@ -97,6 +108,7 @@ export function initPageSettings({
   });
 
   function applySettings(nextSettings) {
+    document.documentElement.classList.toggle("theme-light", nextSettings.theme === "light");
     document.documentElement.classList.toggle("pref-hide-shortcuts", !nextSettings.showShortcuts);
     document.documentElement.classList.toggle("pref-hide-widgets", !nextSettings.showWidgets);
 
@@ -109,6 +121,7 @@ export function initPageSettings({
   }
 
   function syncControls(nextSettings) {
+    darkModeToggleEl.checked = nextSettings.theme !== "light";
     shortcutsToggleEl.checked = Boolean(nextSettings.showShortcuts);
     widgetsToggleEl.checked = Boolean(nextSettings.showWidgets);
   }
@@ -118,7 +131,9 @@ export function initPageSettings({
       const raw = localStorage.getItem(PAGE_SETTINGS_KEY);
       if (!raw) return { ...DEFAULT_SETTINGS };
       const parsed = JSON.parse(raw);
+      const theme = parsed?.theme === "light" ? "light" : "dark";
       return {
+        theme,
         showShortcuts: typeof parsed?.showShortcuts === "boolean" ? parsed.showShortcuts : DEFAULT_SETTINGS.showShortcuts,
         showWidgets: typeof parsed?.showWidgets === "boolean" ? parsed.showWidgets : DEFAULT_SETTINGS.showWidgets,
       };

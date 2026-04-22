@@ -30,6 +30,7 @@ const settings = initPageSettings({
   settingsToggleEl,
   shortcutsEl: document.getElementById("shortcutsList"),
   widgetsPanelEl: document.querySelector(".widgets-panel"),
+  darkModeToggleEl: document.getElementById("toggleDarkMode"),
   shortcutsToggleEl: document.getElementById("toggleShortcuts"),
   widgetsToggleEl: document.getElementById("toggleWidgets"),
   clearSearchHistoryBtnEl: document.getElementById("clearSearchHistoryBtn"),
@@ -93,4 +94,10 @@ document.addEventListener("keydown", (event) => {
   appsMenu.closeAppsMenu();
   settings.closeSettingsMenu();
   search.hideSuggestions();
+});
+
+requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+    document.documentElement.classList.remove("booting");
+  });
 });

@@ -4,6 +4,21 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>New Tab</title>
+    <script>
+      (() => {
+        try {
+          document.documentElement.classList.add("booting");
+          const raw = localStorage.getItem("chrome-clone-page-settings-v1");
+          if (!raw) return;
+          const parsed = JSON.parse(raw);
+          if (parsed?.theme === "light") document.documentElement.classList.add("theme-light");
+          if (parsed?.showShortcuts === false) document.documentElement.classList.add("pref-hide-shortcuts");
+          if (parsed?.showWidgets === false) document.documentElement.classList.add("pref-hide-widgets");
+        } catch {
+          // no-op
+        }
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet" />
@@ -37,8 +52,8 @@
         <h3>Settings</h3>
         <div class="settings-item">
           <span>Dark mode</span>
-          <label class="toggle is-disabled" for="toggleDarkMode" aria-label="Dark mode (coming soon)" aria-disabled="true">
-            <input id="toggleDarkMode" type="checkbox" checked disabled aria-label="Dark mode" />
+          <label class="toggle" for="toggleDarkMode" aria-label="Toggle dark mode">
+            <input id="toggleDarkMode" type="checkbox" checked aria-label="Dark mode" />
             <span class="toggle-track"></span>
           </label>
         </div>

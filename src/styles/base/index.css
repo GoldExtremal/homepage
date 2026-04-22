@@ -10,6 +10,11 @@
   --tile-bg: rgba(255, 255, 255, 0.08);
   --tile-hover: rgba(255, 255, 255, 0.14);
   --shadow: 0 18px 48px rgba(0, 0, 0, 0.36);
+  --page-bg:
+    radial-gradient(1050px 660px at 14% -8%, rgba(58, 87, 140, 0.26), transparent 60%),
+    radial-gradient(900px 580px at 86% 2%, rgba(58, 72, 128, 0.23), transparent 58%),
+    radial-gradient(860px 560px at 52% 108%, rgba(39, 67, 103, 0.2), transparent 62%),
+    linear-gradient(160deg, #111927 0%, #0f1724 46%, #0d1520 100%);
 }
 
 * {
@@ -26,17 +31,40 @@ body {
 body {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
   color: var(--text);
-  background:
-    radial-gradient(1050px 660px at 14% -8%, rgba(58, 87, 140, 0.26), transparent 60%),
-    radial-gradient(900px 580px at 86% 2%, rgba(58, 72, 128, 0.23), transparent 58%),
-    radial-gradient(860px 560px at 52% 108%, rgba(39, 67, 103, 0.2), transparent 62%),
-    linear-gradient(160deg, #111927 0%, #0f1724 46%, #0d1520 100%);
+  background: var(--page-bg);
   background-size: 118% 118%;
   animation: bgShift 30s ease-in-out infinite;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+}
+
+html.theme-light {
+  --text: #18233a;
+  --muted: #61718f;
+  --glass: rgba(238, 244, 255, 0.78);
+  --glass-soft: rgba(10, 28, 60, 0.08);
+  --panel: rgba(242, 247, 255, 0.82);
+  --panel-line: rgba(36, 63, 110, 0.18);
+  --search-bg: rgba(252, 254, 255, 0.95);
+  --search-text: #2e4168;
+  --tile-bg: rgba(235, 244, 255, 0.74);
+  --tile-hover: rgba(216, 232, 255, 0.92);
+  --shadow: 0 18px 48px rgba(32, 66, 122, 0.16);
+  --page-bg:
+    radial-gradient(960px 620px at 12% -5%, rgba(152, 192, 255, 0.42), transparent 60%),
+    radial-gradient(820px 520px at 90% 6%, rgba(181, 210, 255, 0.35), transparent 56%),
+    radial-gradient(840px 520px at 52% 108%, rgba(194, 220, 255, 0.34), transparent 62%),
+    linear-gradient(160deg, #e9f1ff 0%, #dfeaff 48%, #eaf2ff 100%);
+}
+
+html.theme-light body::before {
+  opacity: 0.6;
+}
+
+html.theme-light body::after {
+  opacity: 0.03;
 }
 
 @media (max-width: 699px) {
@@ -70,6 +98,18 @@ body::after {
   background-position: 0 0, 1px 1px;
   opacity: 0.06;
   animation: grainShift 10s steps(14, end) infinite;
+}
+
+html.booting .shortcuts,
+html.booting .widgets-panel {
+  opacity: 0;
+}
+
+html.booting .shortcut-item,
+html.booting .shortcut-link,
+html.booting .widget-card {
+  transition: none !important;
+  animation: none !important;
 }
 
 @keyframes bgShift {
