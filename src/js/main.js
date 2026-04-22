@@ -1,4 +1,5 @@
 import { initAppsMenu } from "./features/appsMenu.js";
+import { renderGoogleServicesMenu } from "./features/googleServicesMenu.js";
 import { initSearch } from "./features/search.js";
 import { initPageSettings } from "./features/settings.js";
 import { initShortcuts } from "./features/shortcuts.js";
@@ -10,9 +11,13 @@ const search = initSearch({
   suggestionsEl: document.getElementById("searchSuggestions"),
 });
 
+const appsMenuEl = document.getElementById("appsMenu");
+renderGoogleServicesMenu(appsMenuEl);
+
 const appsMenu = initAppsMenu({
   appsWrapEl: document.querySelector(".apps-wrap"),
   appsToggleEl: document.getElementById("appsToggle"),
+  appsMenuEl,
 });
 const appsToggleEl = document.getElementById("appsToggle");
 const settingsToggleEl = document.getElementById("settingsToggle");

@@ -116,25 +116,30 @@
 }
 
 .apps-menu {
-  position: absolute;
-  top: 44px;
-  right: calc(var(--topbar-right-pad) * -1);
-  width: 394px;
-  max-width: calc(100vw - 24px);
-  padding: 12px;
-  border-radius: 26px;
-  background: #101827;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  position: fixed;
+  top: 82px;
+  right: 18px;
+  width: 360px;
+  max-width: calc(100vw - 18px);
+  padding: 10px 10px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(186, 207, 255, 0.24);
+  background: rgba(6, 11, 22, 0.1);
   box-shadow:
-    0 28px 56px rgba(0, 0, 0, 0.56),
-    0 0 0 1px rgba(255, 255, 255, 0.03) inset;
-  backdrop-filter: none;
+    inset 0 1px 0 rgba(225, 237, 255, 0.2),
+    0 26px 46px rgba(2, 6, 16, 0.62);
+  backdrop-filter: blur(48px) saturate(160%) brightness(0.55);
+  -webkit-backdrop-filter: blur(48px) saturate(160%) brightness(0.55);
+  will-change: backdrop-filter;
   display: none;
-  z-index: 260;
+  z-index: 520;
+  overflow: hidden;
 }
 
-.apps-wrap.open .apps-menu {
-  display: block;
+.apps-menu.open {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .settings-menu {
@@ -163,6 +168,11 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+.settings-menu.apps-menu {
+  height: auto;
+  max-height: calc(100dvh - 90px);
 }
 
 .shortcuts.is-hidden,
@@ -274,34 +284,19 @@ html.pref-hide-widgets .widgets-panel {
   transform: translate(20px, -50%);
 }
 
-.apps-menu-shell {
-  display: grid;
-  gap: 14px;
-}
-
-.favorites-card {
-  border-radius: 22px;
-  background: #09101d;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  padding: 14px 10px 12px;
-}
-
-.favorites-head {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 10px;
-  padding: 0 8px;
+.apps-menu h3 {
+  margin: 4px 6px 12px;
+  color: #f4f8ff;
+  font-size: 30px;
+  line-height: 1.1;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", sans-serif;
   text-align: center;
 }
 
-.favorites-head h2 {
-  margin: 0;
-  font-size: 24px;
-  line-height: 1.15;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", sans-serif;
-  color: #eaf1ff;
+.apps-menu .apps-grid {
+  margin-top: 4px;
 }
 
 .apps-grid {
@@ -311,25 +306,31 @@ html.pref-hide-widgets .widgets-panel {
 }
 
 .apps-more-btn {
-  margin: 12px auto 4px;
+  margin: 24px auto 4px;
   min-height: 46px;
-  padding: 0 24px;
+  padding: 0 22px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.06);
-  color: #dce8ff;
+  border: 1px solid rgba(198, 216, 248, 0.34);
+  background: linear-gradient(180deg, rgba(20, 32, 54, 0.58), rgba(11, 20, 36, 0.68));
+  box-shadow:
+    inset 0 1px 0 rgba(248, 252, 255, 0.2),
+    0 8px 20px rgba(2, 6, 16, 0.34);
+  color: #eef4ff;
   text-decoration: none;
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   transition: background-color 0.14s ease, border-color 0.14s ease;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", sans-serif;
+  letter-spacing: -0.01em;
 }
 
 .apps-more-btn:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.26);
+  background: linear-gradient(180deg, rgba(34, 48, 76, 0.66), rgba(16, 28, 48, 0.76));
+  border-color: rgba(214, 229, 255, 0.46);
 }
 
 .apps-tile {
@@ -342,8 +343,8 @@ html.pref-hide-widgets .widgets-panel {
   align-content: center;
   gap: 8px;
   font-size: 15px;
-  font-weight: 500;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+  font-weight: 400;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", sans-serif;
   letter-spacing: -0.01em;
 }
 
@@ -416,6 +417,11 @@ html.pref-hide-widgets .widgets-panel {
     max-height: calc(100dvh - 76px);
   }
 
+  .settings-menu.apps-menu {
+    height: auto;
+    max-height: calc(100dvh - 76px);
+  }
+
   .settings-item {
     min-height: 42px;
     font-size: 16px;
@@ -429,6 +435,12 @@ html.pref-hide-widgets .widgets-panel {
     height: 40px;
     font-size: 14px;
   }
+
+  .apps-menu {
+    width: min(320px, calc(100vw - 18px));
+    top: 68px;
+    right: 12px;
+  }
 }
 
 @media (max-width: 800px) {
@@ -439,10 +451,6 @@ html.pref-hide-widgets .widgets-panel {
 
   .apps-menu {
     width: min(92vw, 360px);
-  }
-
-  .favorites-head h2 {
-    font-size: 28px;
   }
 }
 
