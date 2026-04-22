@@ -49,12 +49,24 @@
       <div id="settingsMenu" class="settings-menu" role="menu" aria-label="Page settings">
         <h3>Settings</h3>
         <div class="settings-item">
+          <span>Dark mode</span>
+          <label class="toggle is-disabled" for="toggleDarkMode" aria-label="Dark mode (coming soon)" aria-disabled="true">
+            <input id="toggleDarkMode" type="checkbox" checked disabled aria-label="Dark mode" />
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <button id="clearSearchHistoryBtn" class="settings-action-btn" type="button">Clear search history</button>
+        <button id="setCustomBackgroundBtn" class="settings-action-btn" type="button">Set custom background</button>
+        <div class="settings-subheading">Shortcuts</div>
+        <div class="settings-item">
           <span>Show shortcuts</span>
           <label class="toggle" for="toggleShortcuts" aria-label="Toggle shortcuts visibility">
             <input id="toggleShortcuts" type="checkbox" aria-label="Show shortcuts" />
             <span class="toggle-track"></span>
           </label>
         </div>
+        <button id="resetShortcutsBtn" class="settings-action-btn" type="button">Reset shortcuts</button>
+        <div class="settings-subheading">Widgets</div>
         <div class="settings-item">
           <span>Show widgets</span>
           <label class="toggle" for="toggleWidgets" aria-label="Toggle widgets visibility">
@@ -62,7 +74,8 @@
             <span class="toggle-track"></span>
           </label>
         </div>
-        <button id="resetUserDataBtn" class="settings-reset-btn" type="button">Reset user data</button>
+        <button id="clearWidgetsDataBtn" class="settings-action-btn" type="button">Clear widgets data</button>
+        <button id="resetUserDataBtn" class="settings-reset-btn" type="button">Reset all user data</button>
       </div>
       <div id="appsMenu" class="settings-menu apps-menu" role="menu" aria-label="Google services"></div>
       <main class="hero">

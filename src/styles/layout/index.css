@@ -211,6 +211,32 @@ html.pref-hide-widgets .widgets-panel {
   letter-spacing: -0.01em;
 }
 
+.settings-subheading {
+  margin: 14px 8px 2px;
+  color: rgba(198, 212, 239, 0.84);
+  font-size: 13px;
+  line-height: 1.2;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.settings-subheading::before,
+.settings-subheading::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(198, 212, 239, 0.05), rgba(198, 212, 239, 0.34));
+}
+
+.settings-subheading::after {
+  background: linear-gradient(270deg, rgba(198, 212, 239, 0.05), rgba(198, 212, 239, 0.34));
+}
+
 .settings-reset-btn {
   margin-top: auto;
   margin-bottom: 2px;
@@ -219,11 +245,35 @@ html.pref-hide-widgets .widgets-panel {
   border: 1px solid rgba(255, 128, 128, 0.42);
   background: rgba(122, 21, 28, 0.24);
   color: #ffd9dc;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 500;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", sans-serif;
+  letter-spacing: -0.01em;
   cursor: pointer;
   transition: background-color 0.14s ease, border-color 0.14s ease;
+}
+
+.settings-action-btn {
+  min-height: 42px;
+  padding: 6px 8px;
+  border-radius: 14px;
+  border: 0;
+  background: transparent;
+  color: #e4ecff;
+  font-size: 17px;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", sans-serif;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: left;
+  transition: background-color 0.14s ease;
+}
+
+.settings-action-btn:hover {
+  background: rgba(147, 176, 234, 0.11);
 }
 
 .settings-reset-btn:hover {
@@ -282,6 +332,16 @@ html.pref-hide-widgets .widgets-panel {
 
 .toggle input:checked + .toggle-track::after {
   transform: translate(20px, -50%);
+}
+
+.toggle.is-disabled {
+  opacity: 0.68;
+}
+
+.toggle.is-disabled,
+.toggle.is-disabled .toggle-track,
+.toggle.is-disabled input {
+  cursor: not-allowed;
 }
 
 .apps-menu h3 {

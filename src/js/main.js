@@ -30,6 +30,9 @@ const settings = initPageSettings({
   widgetsPanelEl: document.querySelector(".widgets-panel"),
   shortcutsToggleEl: document.getElementById("toggleShortcuts"),
   widgetsToggleEl: document.getElementById("toggleWidgets"),
+  clearSearchHistoryBtnEl: document.getElementById("clearSearchHistoryBtn"),
+  resetShortcutsBtnEl: document.getElementById("resetShortcutsBtn"),
+  clearWidgetsDataBtnEl: document.getElementById("clearWidgetsDataBtn"),
   resetUserDataBtnEl: document.getElementById("resetUserDataBtn"),
 });
 

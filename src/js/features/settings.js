@@ -1,4 +1,11 @@
-import { PAGE_SETTINGS_KEY, RESETTABLE_STORAGE_KEYS } from "../config/constants.js";
+import {
+  PAGE_SETTINGS_KEY,
+  RESETTABLE_STORAGE_KEYS,
+  SEARCH_HISTORY_KEY,
+  SHORTCUTS_STORAGE_KEY,
+  WEATHER_CITY_KEY,
+  WIDGETS_ORDER_KEY,
+} from "../config/constants.js";
 
 const DEFAULT_SETTINGS = {
   showShortcuts: true,
@@ -13,6 +20,9 @@ export function initPageSettings({
   widgetsPanelEl,
   shortcutsToggleEl,
   widgetsToggleEl,
+  clearSearchHistoryBtnEl,
+  resetShortcutsBtnEl,
+  clearWidgetsDataBtnEl,
   resetUserDataBtnEl,
 }) {
   if (!settingsWrapEl || !settingsMenuEl || !settingsToggleEl || !shortcutsToggleEl || !widgetsToggleEl) {
@@ -57,6 +67,28 @@ export function initPageSettings({
     const isConfirmed = window.confirm("Reset all user data on this page? This will remove shortcuts, widget order, weather city, and search history.");
     if (!isConfirmed) return;
     RESETTABLE_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
+    window.location.reload();
+  });
+
+  clearSearchHistoryBtnEl?.addEventListener("click", () => {
+    const isConfirmed = window.confirm("Clear local search history?");
+    if (!isConfirmed) return;
+    localStorage.removeItem(SEARCH_HISTORY_KEY);
+    window.location.reload();
+  });
+
+  resetShortcutsBtnEl?.addEventListener("click", () => {
+    const isConfirmed = window.confirm("Reset shortcuts to default?");
+    if (!isConfirmed) return;
+    localStorage.removeItem(SHORTCUTS_STORAGE_KEY);
+    window.location.reload();
+  });
+
+  clearWidgetsDataBtnEl?.addEventListener("click", () => {
+    const isConfirmed = window.confirm("Clear widgets data (weather city and widget order)?");
+    if (!isConfirmed) return;
+    localStorage.removeItem(WEATHER_CITY_KEY);
+    localStorage.removeItem(WIDGETS_ORDER_KEY);
     window.location.reload();
   });
 
