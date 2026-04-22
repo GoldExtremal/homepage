@@ -12,7 +12,7 @@
 4. Если перенаправление не сработало автоматически, откройте настройки расширения, вставьте ссылку `https://goldextremal.github.io/homepage/` и нажмите `Save`.
 
 <p align="center">
-  <img src="./assets/extentions.png" alt="Настройка расширения New Tab Redirect" width="620" />
+  <img src="./assets/extentions.png" alt="Настройка расширения New Tab Redirect" width="310" />
 </p>
 
 ## Стек
