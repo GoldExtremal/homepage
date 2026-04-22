@@ -12,6 +12,8 @@ const DEFAULT_SETTINGS = {
   showWidgets: true,
 };
 
+const WIDGETS_VISIBILITY_EVENT = "page-settings:widgets-visibility";
+
 export function initPageSettings({
   settingsWrapEl,
   settingsMenuEl,
@@ -36,6 +38,7 @@ export function initPageSettings({
 
   let settings = readSettings();
   applySettings(settings);
+  emitWidgetsVisibility(settings.showWidgets);
   syncControls(settings);
 
   settingsToggleEl.addEventListener("click", (event) => {
@@ -60,6 +63,7 @@ export function initPageSettings({
       showWidgets: widgetsToggleEl.checked,
     };
     applySettings(settings);
+    emitWidgetsVisibility(settings.showWidgets);
     persistSettings(settings);
   });
 
@@ -127,6 +131,14 @@ export function initPageSettings({
     localStorage.setItem(PAGE_SETTINGS_KEY, JSON.stringify(nextSettings));
   }
 
+  function emitWidgetsVisibility(visible) {
+    window.dispatchEvent(
+      new CustomEvent(WIDGETS_VISIBILITY_EVENT, {
+        detail: { visible: Boolean(visible) },
+      })
+    );
+  }
+
   function closeSettingsMenu() {
     settingsWrapEl.classList.remove("open");
     settingsMenuEl.classList.remove("open");
@@ -140,3 +152,5 @@ export function initPageSettings({
     },
   };
 }
+
+export { WIDGETS_VISIBILITY_EVENT };

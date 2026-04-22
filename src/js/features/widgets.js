@@ -1,4 +1,12 @@
 import { WEATHER_CITY_KEY, WIDGETS_ORDER_KEY } from "../config/constants.js";
+import { WIDGETS_VISIBILITY_EVENT } from "./settings.js";
+import {
+  animateNeighborShift,
+  getAdjacentByDirection,
+  movePlaceholderNode,
+  stopNeighborAnimations,
+} from "../utils/reorder.js";
+import { reportError } from "../utils/log.js";
 
 const DRAG_PREVIEW_SCALE = 1.035;
 
@@ -15,11 +23,19 @@ export function initWidgets({
   const savedCity = localStorage.getItem(WEATHER_CITY_KEY) || "Москва";
   let lastWeatherCity = savedCity;
   let lastWeatherQueryKey = normalizeCityQuery(savedCity);
+  let widgetsDataLoaded = false;
   if (weatherCityInputEl) weatherCityInputEl.value = savedCity;
   if (weatherCityInputEl) weatherCityInputEl.placeholder = "Город";
-  void loadWeather(savedCity);
-  void loadCurrency();
-  void loadIpInfo();
+  if (isWidgetsVisible()) {
+    loadWidgetsData();
+  }
+
+  window.addEventListener(WIDGETS_VISIBILITY_EVENT, (event) => {
+    const isVisible = Boolean(event?.detail?.visible);
+    if (isVisible) {
+      loadWidgetsData();
+    }
+  });
 
   if (weatherFormEl) {
     weatherFormEl.addEventListener("submit", (event) => {
@@ -90,7 +106,8 @@ export function initWidgets({
           <span class="weather-chip">Влажность ${humidity}%</span>
         </div>
       `;
-    } catch {
+    } catch (error) {
+      reportError("Weather widget request failed", error);
       weatherContentEl.textContent = "Погода недоступна";
       applyWeatherVisualState(weatherContentEl, null);
     }
@@ -122,7 +139,8 @@ export function initWidgets({
         </div>
         <span class="sub">Обновлено в ${refreshedAt}</span>
       `;
-    } catch {
+    } catch (error) {
+      reportError("Currency widget request failed", error);
       currencyContentEl.textContent = "Курсы временно недоступны";
     }
   }
@@ -149,7 +167,8 @@ export function initWidgets({
           <div class="ip-city">${city ? escapeHtml(city) : "Location unavailable"}</div>
         </div>
       `;
-    } catch {
+    } catch (error) {
+      reportError("IP widget request failed", error);
       ipContentEl.textContent = "Данные IP недоступны";
     }
   }
@@ -176,6 +195,14 @@ export function initWidgets({
     lastWeatherCity = city;
     lastWeatherQueryKey = cityQueryKey;
     void loadWeather(city);
+  }
+
+  function loadWidgetsData() {
+    if (widgetsDataLoaded) return;
+    widgetsDataLoaded = true;
+    void loadWeather(savedCity);
+    void loadCurrency();
+    void loadIpInfo();
   }
 
   function initWidgetsReorder() {
@@ -356,12 +383,17 @@ export function initWidgets({
 
       if (!targetCard) return;
 
-      stopNeighborAnimations();
+      stopNeighborAnimations(getRealWidgetCards(), activeNeighborAnimations);
       const beforeRect = targetCard.getBoundingClientRect();
       movePlaceholderNode(placeholderCard, targetCard, fromIndex, nextIndex);
       placeholderCard.dataset.index = String(nextIndex);
       updateWidgetIndexes();
-      animateNeighborShift(targetCard, beforeRect);
+      animateNeighborShift({
+        node: targetCard,
+        beforeRect,
+        animations: activeNeighborAnimations,
+        duration: REORDER_ANIMATION_MS,
+      });
       hasReordered = true;
       nextReorderAllowedAt = now + REORDER_STEP_MS;
       reorderAnimating = true;
@@ -379,65 +411,12 @@ export function initWidgets({
       draggedCard.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${DRAG_PREVIEW_SCALE})`;
     }
 
-    function movePlaceholderNode(placeholder, target, fromIndex, toIndex) {
-      const parent = placeholder.parentNode;
-      if (!parent || parent !== target.parentNode) return;
-      if (fromIndex < toIndex) {
-        parent.insertBefore(placeholder, target.nextSibling);
-        return;
-      }
-      parent.insertBefore(placeholder, target);
-    }
-
     function getAdjacentWidgetCard(node, direction) {
-      let current = node;
-      while (current) {
-        current = direction > 0 ? current.nextElementSibling : current.previousElementSibling;
-        if (!current) return null;
-        if (!(current instanceof HTMLElement)) continue;
-        if (!current.matches(".widget-card[data-widget-id]")) continue;
-        if (current.classList.contains("widget-placeholder")) continue;
-        if (current.classList.contains("floating-drag")) continue;
-        return current;
-      }
-      return null;
-    }
-
-    function animateNeighborShift(node, beforeRect) {
-      if (!(node instanceof HTMLElement) || !beforeRect) return;
-      const afterRect = node.getBoundingClientRect();
-      const dx = beforeRect.left - afterRect.left;
-      const dy = beforeRect.top - afterRect.top;
-      if (!dx && !dy) return;
-
-      const previous = activeNeighborAnimations.get(node);
-      if (previous) previous.cancel();
-
-      const animation = node.animate(
-        [
-          { transform: `translate3d(${dx}px, ${dy}px, 0)` },
-          { transform: "translate3d(0, 0, 0)" },
-        ],
-        {
-          duration: REORDER_ANIMATION_MS,
-          easing: "cubic-bezier(0.22, 0.61, 0.36, 1)",
-        }
-      );
-
-      const cleanup = () => {
-        if (activeNeighborAnimations.get(node) === animation) {
-          activeNeighborAnimations.delete(node);
-        }
-      };
-      animation.onfinish = cleanup;
-      animation.oncancel = cleanup;
-      activeNeighborAnimations.set(node, animation);
-    }
-
-    function stopNeighborAnimations() {
-      getRealWidgetCards().forEach((card) => {
-        const animation = activeNeighborAnimations.get(card);
-        if (animation) animation.cancel();
+      return getAdjacentByDirection(node, direction, (current) => {
+        if (!current.matches(".widget-card[data-widget-id]")) return false;
+        if (current.classList.contains("widget-placeholder")) return false;
+        if (current.classList.contains("floating-drag")) return false;
+        return true;
       });
     }
 
@@ -526,6 +505,10 @@ export function initWidgets({
   function getRealWidgetCards() {
     if (!widgetsPanelEl) return [];
     return Array.from(widgetsPanelEl.querySelectorAll(".widget-card[data-widget-id]:not(.floating-drag):not(.widget-placeholder)"));
+  }
+
+  function isWidgetsVisible() {
+    return !document.documentElement.classList.contains("pref-hide-widgets");
   }
 }
 

@@ -6,6 +6,12 @@ import {
   normalizeUrl,
   shouldPreferHostFirst,
 } from "../utils/url.js";
+import {
+  animateNeighborShift,
+  getAdjacentByDirection,
+  movePlaceholderNode,
+  stopNeighborAnimations,
+} from "../utils/reorder.js";
 
 export function initShortcuts({
   listEl,
@@ -408,13 +414,18 @@ export function initShortcuts({
     if (!targetTile) return;
     if (nextIndex < 0 || nextIndex >= shortcuts.length) return;
 
-    stopNeighborAnimations();
+    stopNeighborAnimations(getRealShortcutTiles(), activeNeighborAnimations);
     const neighborBeforeRect = targetTile.getBoundingClientRect();
     moveShortcutItem(fromIndex, nextIndex);
     movePlaceholderNode(placeholderTile, targetTile, fromIndex, nextIndex);
     placeholderTile.dataset.index = String(nextIndex);
     updateShortcutIndexes();
-    animateNeighborShift(targetTile, neighborBeforeRect);
+    animateNeighborShift({
+      node: targetTile,
+      beforeRect: neighborBeforeRect,
+      animations: activeNeighborAnimations,
+      duration: REORDER_ANIMATION_MS,
+    });
     hasDragReordered = true;
     nextReorderAllowedAt = now + REORDER_STEP_MS;
     reorderAnimating = true;
@@ -430,16 +441,6 @@ export function initShortcuts({
     shortcuts.splice(toIndex, 0, moved);
   }
 
-  function movePlaceholderNode(placeholder, target, fromIndex, toIndex) {
-    const parent = placeholder.parentNode;
-    if (!parent || parent !== target.parentNode) return;
-    if (fromIndex < toIndex) {
-      parent.insertBefore(placeholder, target.nextSibling);
-      return;
-    }
-    parent.insertBefore(placeholder, target);
-  }
-
   function updateShortcutIndexes() {
     getRealShortcutTiles().forEach((node, idx) => {
       node.dataset.index = String(idx);
@@ -447,17 +448,12 @@ export function initShortcuts({
   }
 
   function getAdjacentShortcutTile(node, direction) {
-    let current = node;
-    while (current) {
-      current = direction > 0 ? current.nextElementSibling : current.previousElementSibling;
-      if (!current) return null;
-      if (!(current instanceof HTMLElement)) continue;
-      if (current.classList.contains("shortcut-item-add")) continue;
-      if (current.classList.contains("shortcut-placeholder")) continue;
-      if (current.classList.contains("floating-drag")) continue;
-      return current;
-    }
-    return null;
+    return getAdjacentByDirection(node, direction, (current) => {
+      if (current.classList.contains("shortcut-item-add")) return false;
+      if (current.classList.contains("shortcut-placeholder")) return false;
+      if (current.classList.contains("floating-drag")) return false;
+      return true;
+    });
   }
 
   function finishFloatingDrag() {
@@ -503,44 +499,6 @@ export function initShortcuts({
     return Array.from(
       listEl.querySelectorAll(".shortcut-item:not(.shortcut-item-add):not(.floating-drag):not(.shortcut-placeholder)")
     );
-  }
-
-  function animateNeighborShift(node, beforeRect) {
-    if (!(node instanceof HTMLElement) || !beforeRect) return;
-    const afterRect = node.getBoundingClientRect();
-    const dx = beforeRect.left - afterRect.left;
-    const dy = beforeRect.top - afterRect.top;
-    if (!dx && !dy) return;
-
-    const previous = activeNeighborAnimations.get(node);
-    if (previous) previous.cancel();
-
-    const animation = node.animate(
-      [
-        { transform: `translate3d(${dx}px, ${dy}px, 0)` },
-        { transform: "translate3d(0, 0, 0)" },
-      ],
-      {
-        duration: 170,
-        easing: "cubic-bezier(0.22, 0.61, 0.36, 1)",
-      }
-    );
-
-    const cleanup = () => {
-      if (activeNeighborAnimations.get(node) === animation) {
-        activeNeighborAnimations.delete(node);
-      }
-    };
-    animation.onfinish = cleanup;
-    animation.oncancel = cleanup;
-    activeNeighborAnimations.set(node, animation);
-  }
-
-  function stopNeighborAnimations() {
-    getRealShortcutTiles().forEach((node) => {
-      const animation = activeNeighborAnimations.get(node);
-      if (animation) animation.cancel();
-    });
   }
 
   function resetDialog() {

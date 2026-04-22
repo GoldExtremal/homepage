@@ -1,4 +1,5 @@
 import { SEARCH_HISTORY_KEY, SEARCH_HISTORY_LIMIT, SUGGEST_ENDPOINT } from "../config/constants.js";
+import { reportError } from "../utils/log.js";
 import { looksLikeUrl, normalizeUrl } from "../utils/url.js";
 
 export function initSearch({ formEl, inputEl, suggestionsEl }) {
@@ -95,7 +96,8 @@ export function initSearch({ formEl, inputEl, suggestionsEl }) {
       const historyItems = getHistoryMatches(query).map((text) => ({ text, source: "history" }));
       const merged = mergeSuggestionItems(historyItems, googleItems);
       renderSuggestions(merged);
-    } catch {
+    } catch (error) {
+      reportError("Search suggestions request failed", error);
       if (requestId !== suggestRequestId) return;
       const historyItems = getHistoryMatches(query).map((text) => ({ text, source: "history" }));
       if (!historyItems.length) {
