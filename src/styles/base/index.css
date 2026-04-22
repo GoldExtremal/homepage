@@ -31,13 +31,20 @@ body {
 body {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
   color: var(--text);
-  background: var(--page-bg);
+  background: var(--user-bg, var(--page-bg));
   background-size: 118% 118%;
+  background-position: center;
+  background-repeat: no-repeat;
   animation: bgShift 30s ease-in-out infinite;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+}
+
+html.custom-bg body {
+  background-size: cover;
+  animation: none;
 }
 
 html.theme-light {

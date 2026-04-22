@@ -8,6 +8,11 @@
       (() => {
         try {
           document.documentElement.classList.add("booting");
+          const bgRaw = localStorage.getItem("chrome-clone-background-image-v1");
+          if (bgRaw) {
+            document.documentElement.classList.add("custom-bg");
+            document.documentElement.style.setProperty("--user-bg", `url("${bgRaw.replaceAll('"', '\\"')}")`);
+          }
           const raw = localStorage.getItem("chrome-clone-page-settings-v1");
           if (!raw) return;
           const parsed = JSON.parse(raw);
@@ -58,7 +63,9 @@
           </label>
         </div>
         <button id="clearSearchHistoryBtn" class="settings-action-btn" type="button">Clear search history</button>
+        <div class="settings-subheading">Background</div>
         <button id="setCustomBackgroundBtn" class="settings-action-btn" type="button">Set custom background</button>
+        <button id="resetBackgroundBtn" class="settings-action-btn" type="button">Reset background</button>
         <div class="settings-subheading">Shortcuts</div>
         <div class="settings-item">
           <span>Show shortcuts</span>

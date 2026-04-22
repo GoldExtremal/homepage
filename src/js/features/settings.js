@@ -1,4 +1,5 @@
 import {
+  BACKGROUND_IMAGE_KEY,
   PAGE_SETTINGS_KEY,
   RESETTABLE_STORAGE_KEYS,
   SEARCH_HISTORY_KEY,
@@ -25,6 +26,8 @@ export function initPageSettings({
   shortcutsToggleEl,
   widgetsToggleEl,
   clearSearchHistoryBtnEl,
+  setCustomBackgroundBtnEl,
+  resetBackgroundBtnEl,
   resetShortcutsBtnEl,
   clearWidgetsDataBtnEl,
   resetUserDataBtnEl,
@@ -39,6 +42,7 @@ export function initPageSettings({
   }
 
   let settings = readSettings();
+  applyStoredBackground();
   applySettings(settings);
   emitWidgetsVisibility(settings.showWidgets);
   syncControls(settings);
@@ -92,6 +96,17 @@ export function initPageSettings({
     window.location.reload();
   });
 
+  setCustomBackgroundBtnEl?.addEventListener("click", () => {
+    backgroundFileInputEl.click();
+  });
+
+  resetBackgroundBtnEl?.addEventListener("click", () => {
+    const isConfirmed = window.confirm("Reset custom background to default?");
+    if (!isConfirmed) return;
+    localStorage.removeItem(BACKGROUND_IMAGE_KEY);
+    applyDefaultBackground();
+  });
+
   resetShortcutsBtnEl?.addEventListener("click", () => {
     const isConfirmed = window.confirm("Reset shortcuts to default?");
     if (!isConfirmed) return;
@@ -105,6 +120,32 @@ export function initPageSettings({
     localStorage.removeItem(WEATHER_CITY_KEY);
     localStorage.removeItem(WIDGETS_ORDER_KEY);
     window.location.reload();
+  });
+
+  const backgroundFileInputEl = createBackgroundFileInput();
+  backgroundFileInputEl.addEventListener("change", async () => {
+    const file = backgroundFileInputEl.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      window.alert("Please select an image file.");
+      backgroundFileInputEl.value = "";
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      window.alert("Image is too large. Please choose a file up to 5 MB.");
+      backgroundFileInputEl.value = "";
+      return;
+    }
+
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      localStorage.setItem(BACKGROUND_IMAGE_KEY, dataUrl);
+      applyBackground(dataUrl);
+    } catch {
+      window.alert("Failed to save custom background. Please try a smaller image.");
+    } finally {
+      backgroundFileInputEl.value = "";
+    }
   });
 
   function applySettings(nextSettings) {
@@ -144,6 +185,46 @@ export function initPageSettings({
 
   function persistSettings(nextSettings) {
     localStorage.setItem(PAGE_SETTINGS_KEY, JSON.stringify(nextSettings));
+  }
+
+  function createBackgroundFileInput() {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.hidden = true;
+    input.tabIndex = -1;
+    document.body.appendChild(input);
+    return input;
+  }
+
+  function applyStoredBackground() {
+    try {
+      const stored = localStorage.getItem(BACKGROUND_IMAGE_KEY);
+      if (!stored) return;
+      applyBackground(stored);
+    } catch {
+      // no-op
+    }
+  }
+
+  function applyBackground(dataUrl) {
+    if (!dataUrl) return;
+    document.documentElement.classList.add("custom-bg");
+    document.documentElement.style.setProperty("--user-bg", `url("${dataUrl.replaceAll('"', '\\"')}")`);
+  }
+
+  function applyDefaultBackground() {
+    document.documentElement.classList.remove("custom-bg");
+    document.documentElement.style.removeProperty("--user-bg");
+  }
+
+  function readFileAsDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(reader.error || new Error("Failed to read file"));
+      reader.readAsDataURL(file);
+    });
   }
 
   function emitWidgetsVisibility(visible) {

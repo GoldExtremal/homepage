@@ -34,6 +34,8 @@ const settings = initPageSettings({
   shortcutsToggleEl: document.getElementById("toggleShortcuts"),
   widgetsToggleEl: document.getElementById("toggleWidgets"),
   clearSearchHistoryBtnEl: document.getElementById("clearSearchHistoryBtn"),
+  setCustomBackgroundBtnEl: document.getElementById("setCustomBackgroundBtn"),
+  resetBackgroundBtnEl: document.getElementById("resetBackgroundBtn"),
   resetShortcutsBtnEl: document.getElementById("resetShortcutsBtn"),
   clearWidgetsDataBtnEl: document.getElementById("clearWidgetsDataBtn"),
   resetUserDataBtnEl: document.getElementById("resetUserDataBtn"),

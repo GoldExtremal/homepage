@@ -6,12 +6,14 @@ export const SUGGEST_ENDPOINT = "https://suggestqueries.google.com/complete/sear
 export const SEARCH_HISTORY_KEY = "chrome-clone-search-history-v1";
 export const SEARCH_HISTORY_LIMIT = 8;
 export const PAGE_SETTINGS_KEY = "chrome-clone-page-settings-v1";
+export const BACKGROUND_IMAGE_KEY = "chrome-clone-background-image-v1";
 export const RESETTABLE_STORAGE_KEYS = [
   SHORTCUTS_STORAGE_KEY,
   WEATHER_CITY_KEY,
   WIDGETS_ORDER_KEY,
   SEARCH_HISTORY_KEY,
   PAGE_SETTINGS_KEY,
+  BACKGROUND_IMAGE_KEY,
 ];
 
 export const DEFAULT_SHORTCUTS = [
