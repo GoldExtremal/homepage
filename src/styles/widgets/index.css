@@ -631,9 +631,26 @@ body.widgets-dragging * {
 }
 
 .ip-flag {
-  font-size: 16px;
+  width: 18px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.ip-flag-img {
+  width: 18px;
+  height: 14px;
+  display: block;
+  border-radius: 2px;
+  object-fit: cover;
+}
+
+.ip-flag-fallback {
+  display: none;
+  font-size: 13px;
   line-height: 1;
-  filter: saturate(0.95) contrast(1.04);
 }
 
 .ip-city {

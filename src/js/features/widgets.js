@@ -137,13 +137,13 @@ export function initWidgets({
       const countryCode = data.countryCode || "";
       const country = resolveCountryName(data.country, countryCode);
       const city = data.city || "";
-      const flag = countryCode ? countryCodeToFlag(countryCode) : "";
+      const flagMarkup = renderCountryFlagMarkup(countryCode);
 
       ipContentEl.innerHTML = `
         <div class="ip-content-premium">
           <div class="ip-value">${escapeHtml(ip)}</div>
           <div class="ip-meta">
-            <span class="ip-flag">${flag}</span>
+            <span class="ip-flag">${flagMarkup}</span>
             <span>${escapeHtml(country)}</span>
           </div>
           <div class="ip-city">${city ? escapeHtml(city) : "Location unavailable"}</div>
@@ -743,9 +743,21 @@ function renderCurrencyRow(symbol, item) {
   `;
 }
 
-function countryCodeToFlag(code) {
-  if (!/^[A-Z]{2}$/.test(code)) return "🌐";
-  return String.fromCodePoint(...[...code].map((char) => 127397 + char.charCodeAt(0)));
+function renderCountryFlagMarkup(code) {
+  const alpha2 = String(code || "").trim().toLowerCase();
+  if (!/^[a-z]{2}$/.test(alpha2)) return '<span class="ip-flag-fallback" style="display:inline">🌐</span>';
+
+  const src = `./assets/icons/flags/${alpha2}.svg`;
+  return `
+    <img
+      class="ip-flag-img"
+      src="${src}"
+      alt=""
+      loading="lazy"
+      onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"
+    />
+    <span class="ip-flag-fallback">🌐</span>
+  `;
 }
 
 function resolveCountryName(country, countryCode) {
