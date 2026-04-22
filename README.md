@@ -1,6 +1,17 @@
-# Start Atlas
+# [Домашняя страница для Google Chrome](https://goldextremal.github.io/homepage/)
 
 Кастомная стартовая страница в стиле Chrome New Tab: поиск, шорткаты, виджеты и меню сервисов.
+
+![Превью страницы](./assets/preview.png)
+
+## Настройка в Chrome
+
+1. Откройте страницу настроек внешнего вида: `chrome://settings/appearance` и активируйте переключатель `Show home button` (Показать кнопку «Главная»).
+2. В поле назначения вместо новой страницы вставьте ссылку: `https://goldextremal.github.io/homepage/`.
+3. Установите расширение для редиректа новой вкладки: `https://chromewebstore.google.com/detail/new-tab-redirect/icpgjfneehieebagbmdbhnlpiopdcmna`.
+4. Если перенаправление не сработало автоматически, откройте настройки расширения, вставьте ссылку `https://goldextremal.github.io/homepage/` и нажмите `Save`.
+
+![Настройка расширения New Tab Redirect](./assets/extentions.png)
 
 ## Стек
 
@@ -8,11 +19,27 @@
 - ES Modules
 - `localStorage` для пользовательских данных
 
+## Локальный запуск
+
+1. Откройте терминал в корне проекта.
+2. Запустите локальный HTTP-сервер:
+
+```bash
+python3 -m http.server 8080
+```
+
+3. Откройте в браузере: `http://localhost:8080`.
+4. Для остановки сервера нажмите `Ctrl + C` в терминале.
+
+Примечание: не открывайте `index.html` напрямую как `file://...`, часть функций (API-запросы и загрузка ассетов) может работать некорректно.
+
 ## Структура проекта
 
 ```text
 .
 ├── assets/
+│   ├── preview.png
+│   ├── extentions.png
 │   └── icons/
 │       ├── chrome-icon.ico
 │       ├── gmail-icon.svg
@@ -88,34 +115,3 @@
 - `chrome-clone-widgets-order-v1` — порядок виджетов.
 - `chrome-clone-search-history-v1` — локальная история поиска.
 - `chrome-clone-page-settings-v1` — настройки показа шорткатов/виджетов.
-
-## Локальный запуск
-
-```bash
-python3 -m http.server 8080
-```
-
-Открой `http://localhost:8080`.
-
-## Деплой на GitHub Pages
-
-1. Запушить ветку `main` в репозиторий.
-2. Открыть `Settings -> Pages`.
-3. Выбрать:
-   - `Source`: `Deploy from a branch`
-   - `Branch`: `main`, папка `/ (root)`
-4. Дождаться публикации.
-
-## Настройка в Chrome
-
-### Как стартовую страницу
-
-1. `chrome://settings/onStartup`
-2. `Open a specific page or set of pages`
-3. Добавить URL страницы.
-
-### Для кнопки Home
-
-1. `chrome://settings/appearance`
-2. Включить `Show home button`
-3. Указать тот же URL.
