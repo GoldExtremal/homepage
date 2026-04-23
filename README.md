@@ -94,15 +94,53 @@ python3 -m http.server 8080
 
 ## Настройки и данные
 
-Хранятся в `localStorage`:
+Все пользовательские настройки сохраняются в `localStorage`, поэтому после перезагрузки страницы состояние остаётся таким же.
 
-- `chrome-clone-page-settings-v1`
-- `chrome-clone-shortcuts-v1`
-- `chrome-clone-search-history-v1`
-- `chrome-clone-weather-city-v1`
-- `chrome-clone-widgets-order-v1`
-- `chrome-clone-background-image-v1`
-- `chrome-clone-background-template-v1`
-- кеш виджетов (`weather/currency/ip`)
+### Что хранится
 
-Кнопка `Reset all user data` очищает пользовательские данные и перезагружает страницу.
+`chrome-clone-page-settings-v1`
+- Общие настройки страницы:
+- язык интерфейса;
+- тема (`dark`/`light`);
+- видимость шорткатов;
+- видимость виджетов.
+
+`chrome-clone-shortcuts-v1`
+- Массив пользовательских шорткатов (название, URL, иконка).
+- Лимит: 5 карточек.
+
+`chrome-clone-search-history-v1`
+- Локальная история поисковых запросов, которая используется в подсказках.
+
+`chrome-clone-weather-city-v1`
+- Последний выбранный город для погодного виджета.
+
+`chrome-clone-widgets-order-v1`
+- Порядок карточек виджетов после drag-and-drop перестановки.
+
+`chrome-clone-background-image-v1`
+- Кастомный фон (data URL или путь к шаблону).
+
+`chrome-clone-background-template-v1`
+- Идентификатор выбранного шаблона фона.
+
+Кеши данных виджетов
+- Погода, валюты и IP кешируются с TTL, чтобы ускорить повторную загрузку страницы и уменьшить количество API-запросов.
+
+### Действия в Settings
+
+`Clear search history`
+- Очищает только локальную историю поиска (`chrome-clone-search-history-v1`).
+
+`Reset shortcuts`
+- Удаляет пользовательские шорткаты (`chrome-clone-shortcuts-v1`) и возвращает набор по умолчанию.
+
+`Clear widgets data`
+- Сбрасывает город погоды и порядок виджетов (`chrome-clone-weather-city-v1`, `chrome-clone-widgets-order-v1`).
+
+`Reset background`
+- Сбрасывает фон к дефолтной тёмной теме и очищает фоновые ключи (`chrome-clone-background-image-v1`, `chrome-clone-background-template-v1`).
+
+`Reset all user data`
+- Полный сброс всех пользовательских данных страницы.
+- После очистки выполняется перезагрузка, и страница возвращается к начальному состоянию.
