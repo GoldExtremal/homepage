@@ -119,6 +119,10 @@ html.booting .widget-card {
   animation: none !important;
 }
 
+html.deferred-css-loading .widgets-panel {
+  visibility: hidden;
+}
+
 @keyframes bgShift {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }

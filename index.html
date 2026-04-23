@@ -8,6 +8,7 @@
       (() => {
         try {
           document.documentElement.classList.add("booting");
+          document.documentElement.classList.add("deferred-css-loading");
           const bgRaw = localStorage.getItem("chrome-clone-background-image-v1");
           const templateRaw = localStorage.getItem("chrome-clone-background-template-v1");
           if (bgRaw) {
@@ -39,15 +40,17 @@
       as="style"
       onload="this.onload=null;this.rel='stylesheet'"
     />
+    <link rel="stylesheet" href="./src/styles/main.css" />
     <link
       rel="preload"
-      href="./src/styles/main.css"
+      href="./src/styles/deferred.css"
       as="style"
-      onload="this.onload=null;this.rel='stylesheet'"
+      onload="this.onload=null;this.rel='stylesheet';document.documentElement.classList.remove('deferred-css-loading')"
     />
     <noscript>
       <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet" />
       <link rel="stylesheet" href="./src/styles/main.css" />
+      <link rel="stylesheet" href="./src/styles/deferred.css" />
     </noscript>
     <link rel="shortcut icon" href="./assets/icons/chrome-icon.ico" type="image/x-icon" />
   </head>

@@ -5,6 +5,7 @@ const CORE_ASSETS = [
   "./",
   "./index.html",
   "./src/styles/main.css",
+  "./src/styles/deferred.css",
   "./src/js/main.js",
   "./assets/icons/chrome-icon.ico",
   "./assets/icons/gmail-icon.svg",

@@ -95,6 +95,10 @@ if ("serviceWorker" in navigator) {
   });
 }
 
+window.addEventListener("load", () => {
+  document.documentElement.classList.remove("deferred-css-loading");
+});
+
 document.addEventListener("click", (event) => {
   if (!(event.target instanceof Element)) return;
 
