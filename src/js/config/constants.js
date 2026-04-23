@@ -7,6 +7,10 @@ export const SEARCH_HISTORY_KEY = "chrome-clone-search-history-v1";
 export const SEARCH_HISTORY_LIMIT = 8;
 export const PAGE_SETTINGS_KEY = "chrome-clone-page-settings-v1";
 export const BACKGROUND_IMAGE_KEY = "chrome-clone-background-image-v1";
+export const BACKGROUND_TEMPLATE_KEY = "chrome-clone-background-template-v1";
+export const WEATHER_CACHE_KEY = "chrome-clone-weather-cache-v1";
+export const CURRENCY_CACHE_KEY = "chrome-clone-currency-cache-v1";
+export const IP_CACHE_KEY = "chrome-clone-ip-cache-v1";
 export const RESETTABLE_STORAGE_KEYS = [
   SHORTCUTS_STORAGE_KEY,
   WEATHER_CITY_KEY,
@@ -14,6 +18,10 @@ export const RESETTABLE_STORAGE_KEYS = [
   SEARCH_HISTORY_KEY,
   PAGE_SETTINGS_KEY,
   BACKGROUND_IMAGE_KEY,
+  BACKGROUND_TEMPLATE_KEY,
+  WEATHER_CACHE_KEY,
+  CURRENCY_CACHE_KEY,
+  IP_CACHE_KEY,
 ];
 
 export const DEFAULT_SHORTCUTS = [

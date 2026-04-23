@@ -27,6 +27,7 @@ const appsMenu = initAppsMenu({
 const settings = initPageSettings({
   settingsWrapEl: document.querySelector(".settings-wrap"),
   settingsMenuEl: document.getElementById("settingsMenu"),
+  templatesMenuEl: document.getElementById("templatesMenu"),
   settingsToggleEl,
   shortcutsEl: document.getElementById("shortcutsList"),
   widgetsPanelEl: document.querySelector(".widgets-panel"),
@@ -35,10 +36,13 @@ const settings = initPageSettings({
   widgetsToggleEl: document.getElementById("toggleWidgets"),
   clearSearchHistoryBtnEl: document.getElementById("clearSearchHistoryBtn"),
   setCustomBackgroundBtnEl: document.getElementById("setCustomBackgroundBtn"),
+  chooseTemplateBtnEl: document.getElementById("chooseTemplateBtn"),
   resetBackgroundBtnEl: document.getElementById("resetBackgroundBtn"),
   resetShortcutsBtnEl: document.getElementById("resetShortcutsBtn"),
   clearWidgetsDataBtnEl: document.getElementById("clearWidgetsDataBtn"),
   resetUserDataBtnEl: document.getElementById("resetUserDataBtn"),
+  templatesBackBtnEl: document.getElementById("templatesBackBtn"),
+  templatesGridEl: document.getElementById("templatesGrid"),
 });
 
 appsToggleEl?.addEventListener("click", () => {
@@ -61,14 +65,35 @@ const shortcuts = initShortcuts({
   cancelBtnEl: document.getElementById("cancelDialog"),
 });
 
-initWidgets({
+const widgetsInitParams = {
   widgetsPanelEl: document.querySelector(".widgets-panel"),
   weatherFormEl: document.getElementById("weatherForm"),
   weatherCityInputEl: document.getElementById("weatherCityInput"),
   weatherContentEl: document.getElementById("weatherContent"),
   currencyContentEl: document.getElementById("currencyContent"),
   ipContentEl: document.getElementById("ipContent"),
-});
+};
+
+let widgetsStarted = false;
+function startWidgetsLazy() {
+  if (widgetsStarted) return;
+  widgetsStarted = true;
+  initWidgets(widgetsInitParams);
+}
+
+if ("requestIdleCallback" in window) {
+  window.requestIdleCallback(() => startWidgetsLazy(), { timeout: 1600 });
+} else {
+  window.setTimeout(() => startWidgetsLazy(), 350);
+}
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(() => {
+      // no-op
+    });
+  });
+}
 
 document.addEventListener("click", (event) => {
   if (!(event.target instanceof Element)) return;

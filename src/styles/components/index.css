@@ -415,7 +415,8 @@ html.theme-light .search-suggestion-item-icon {
   color: #5876a8;
 }
 
-html.theme-light .shortcut-link {
+html.theme-light .shortcut-link,
+html.shortcuts-light-skin .shortcut-link {
   color: #264468;
   border-color: rgba(255, 255, 255, 0.34);
   background: rgba(255, 255, 255, 0.2);
@@ -427,7 +428,11 @@ html.theme-light .shortcut-link {
 html.theme-light .shortcut-link:hover,
 html.theme-light .shortcut-item:hover .shortcut-link,
 html.theme-light .shortcut-item.menu-open .shortcut-link,
-html.theme-light .shortcut-item.floating-drag .shortcut-link {
+html.theme-light .shortcut-item.floating-drag .shortcut-link,
+html.shortcuts-light-skin .shortcut-link:hover,
+html.shortcuts-light-skin .shortcut-item:hover .shortcut-link,
+html.shortcuts-light-skin .shortcut-item.menu-open .shortcut-link,
+html.shortcuts-light-skin .shortcut-item.floating-drag .shortcut-link {
   background: rgba(255, 255, 255, 0.28);
   border-color: rgba(255, 255, 255, 0.44);
   backdrop-filter: blur(10px) saturate(130%);
@@ -438,31 +443,39 @@ html.theme-light .shortcut-item.floating-drag .shortcut-link {
 }
 
 html.theme-light .shortcuts.drag-active .shortcut-item:hover .shortcut-link,
-html.theme-light .shortcut-item.drop-target .shortcut-link {
+html.theme-light .shortcut-item.drop-target .shortcut-link,
+html.shortcuts-light-skin .shortcuts.drag-active .shortcut-item:hover .shortcut-link,
+html.shortcuts-light-skin .shortcut-item.drop-target .shortcut-link {
   background: rgba(255, 255, 255, 0.2);
   border-color: rgba(255, 255, 255, 0.34);
 }
 
-html.theme-light .shortcut-menu-btn {
+html.theme-light .shortcut-menu-btn,
+html.shortcuts-light-skin .shortcut-menu-btn {
   color: #2e4f84;
 }
 
 html.theme-light .shortcut-menu-btn:hover,
-html.theme-light .shortcut-menu-btn:focus-visible {
+html.theme-light .shortcut-menu-btn:focus-visible,
+html.shortcuts-light-skin .shortcut-menu-btn:hover,
+html.shortcuts-light-skin .shortcut-menu-btn:focus-visible {
   background: rgba(120, 154, 214, 0.32);
 }
 
-html.theme-light .shortcut-menu {
+html.theme-light .shortcut-menu,
+html.shortcuts-light-skin .shortcut-menu {
   background: rgba(239, 246, 255, 0.96);
   border-color: rgba(100, 140, 200, 0.24);
   box-shadow: 0 12px 24px rgba(29, 73, 133, 0.18);
 }
 
-html.theme-light .shortcut-menu button {
+html.theme-light .shortcut-menu button,
+html.shortcuts-light-skin .shortcut-menu button {
   color: #294872;
 }
 
-html.theme-light .shortcut-menu button:hover {
+html.theme-light .shortcut-menu button:hover,
+html.shortcuts-light-skin .shortcut-menu button:hover {
   background: rgba(159, 190, 242, 0.28);
 }
 

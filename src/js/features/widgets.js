@@ -1,4 +1,10 @@
-import { WEATHER_CITY_KEY, WIDGETS_ORDER_KEY } from "../config/constants.js";
+import {
+  CURRENCY_CACHE_KEY,
+  IP_CACHE_KEY,
+  WEATHER_CACHE_KEY,
+  WEATHER_CITY_KEY,
+  WIDGETS_ORDER_KEY,
+} from "../config/constants.js";
 import { WIDGETS_VISIBILITY_EVENT } from "./settings.js";
 import {
   animateNeighborShift,
@@ -9,6 +15,9 @@ import {
 import { reportError } from "../utils/log.js";
 
 const DRAG_PREVIEW_SCALE = 1.035;
+const WEATHER_CACHE_TTL_MS = 10 * 60 * 1000;
+const CURRENCY_CACHE_TTL_MS = 15 * 60 * 1000;
+const IP_CACHE_TTL_MS = 15 * 60 * 1000;
 
 export function initWidgets({
   widgetsPanelEl,
@@ -52,6 +61,13 @@ export function initWidgets({
 
   async function loadWeather(city) {
     if (!weatherContentEl) return;
+    const cityKey = normalizeCityQuery(city);
+    const cached = readWeatherCacheEntry(cityKey, WEATHER_CACHE_TTL_MS);
+    if (cached) {
+      renderWeatherPayload(cached, city);
+      return;
+    }
+
     weatherContentEl.textContent = "Загружаю погоду...";
     applyWeatherVisualState(weatherContentEl, null);
 
@@ -82,30 +98,20 @@ export function initWidgets({
       const wind = Math.round(current.wind_speed_10m || 0);
       const humidity = Math.round(current.relative_humidity_2m || 0);
 
-      applyWeatherVisualState(weatherContentEl, { conditionGroup, period });
-      if (weatherCityInputEl) {
-        const cityAndCountry = [place.name, place.country].filter(Boolean).join(", ");
-        weatherCityInputEl.value = cityAndCountry || place.name;
-        lastWeatherQueryKey = normalizeCityQuery(weatherCityInputEl.value);
-      }
-      lastWeatherCity = place.name || city;
-
-      weatherContentEl.innerHTML = `
-        <div class="weather-hero">
-          <div class="weather-hero-left">
-            <div class="weather-temp">${temp}°</div>
-            <span class="weather-icon" aria-hidden="true">${icon}</span>
-          </div>
-          <div class="weather-hero-right">
-            <div class="weather-desc">${condition}</div>
-            <div class="weather-feels">Ощущается как ${feelsLike}°</div>
-          </div>
-        </div>
-        <div class="weather-stats" aria-label="Дополнительные показатели">
-          <span class="weather-chip">Ветер ${wind} м/с</span>
-          <span class="weather-chip">Влажность ${humidity}%</span>
-        </div>
-      `;
+      const payload = {
+        placeName: place.name || city,
+        placeCountry: place.country || "",
+        temp,
+        feelsLike,
+        condition,
+        conditionGroup,
+        period,
+        icon,
+        wind,
+        humidity,
+      };
+      renderWeatherPayload(payload, city);
+      writeWeatherCacheEntry(cityKey, payload);
     } catch (error) {
       reportError("Weather widget request failed", error);
       weatherContentEl.textContent = "Погода недоступна";
@@ -113,8 +119,46 @@ export function initWidgets({
     }
   }
 
+  function renderWeatherPayload(payload, fallbackCity) {
+    if (!weatherContentEl || !payload) return;
+
+    applyWeatherVisualState(weatherContentEl, {
+      conditionGroup: payload.conditionGroup,
+      period: payload.period,
+    });
+
+    if (weatherCityInputEl) {
+      const cityAndCountry = [payload.placeName, payload.placeCountry].filter(Boolean).join(", ");
+      weatherCityInputEl.value = cityAndCountry || payload.placeName || fallbackCity;
+      lastWeatherQueryKey = normalizeCityQuery(weatherCityInputEl.value);
+    }
+    lastWeatherCity = payload.placeName || fallbackCity;
+
+    weatherContentEl.innerHTML = `
+      <div class="weather-hero">
+        <div class="weather-hero-left">
+          <div class="weather-temp">${payload.temp}°</div>
+          <span class="weather-icon" aria-hidden="true">${payload.icon}</span>
+        </div>
+        <div class="weather-hero-right">
+          <div class="weather-desc">${payload.condition}</div>
+          <div class="weather-feels">Ощущается как ${payload.feelsLike}°</div>
+        </div>
+      </div>
+      <div class="weather-stats" aria-label="Дополнительные показатели">
+        <span class="weather-chip">Ветер ${payload.wind} м/с</span>
+        <span class="weather-chip">Влажность ${payload.humidity}%</span>
+      </div>
+    `;
+  }
+
   async function loadCurrency() {
     if (!currencyContentEl) return;
+    const cached = readCachedValue(CURRENCY_CACHE_KEY, CURRENCY_CACHE_TTL_MS);
+    if (cached) {
+      renderCurrencyPayload(cached);
+      return;
+    }
     currencyContentEl.textContent = "Загружаю курсы...";
 
     try {
@@ -126,23 +170,31 @@ export function initWidgets({
       const kzt = normalizeCbrRate(data?.Valute?.KZT);
       if (!usd || !amd || !kzt) throw new Error("currency-empty");
 
-      const refreshedAt = new Date().toLocaleTimeString("ru-RU", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      });
-      currencyContentEl.innerHTML = `
-        <div class="currency-grid">
-          ${renderCurrencyRow("$", usd)}
-          ${renderCurrencyRow("֏", amd)}
-          ${renderCurrencyRow("₸", kzt)}
-        </div>
-        <span class="sub">Обновлено в ${refreshedAt}</span>
-      `;
+      const payload = {
+        refreshedAt: Date.now(),
+        usd,
+        amd,
+        kzt,
+      };
+      renderCurrencyPayload(payload);
+      writeCachedValue(CURRENCY_CACHE_KEY, payload);
     } catch (error) {
       reportError("Currency widget request failed", error);
       currencyContentEl.textContent = "Курсы временно недоступны";
     }
+  }
+
+  function renderCurrencyPayload(payload) {
+    if (!currencyContentEl || !payload) return;
+    const refreshedAt = formatTime24(payload.refreshedAt);
+    currencyContentEl.innerHTML = `
+      <div class="currency-grid">
+        ${renderCurrencyRow("$", payload.usd)}
+        ${renderCurrencyRow("֏", payload.amd)}
+        ${renderCurrencyRow("₸", payload.kzt)}
+      </div>
+      <span class="sub">Обновлено в ${refreshedAt}</span>
+    `;
   }
 
   async function loadIpInfo() {
@@ -151,26 +203,38 @@ export function initWidgets({
 
     try {
       const data = await fetchIpData();
-      const ip = data.ip || "Unknown";
-      const countryCode = data.countryCode || "";
-      const country = resolveCountryName(data.country, countryCode);
-      const city = data.city || "";
-      const flagMarkup = renderCountryFlagMarkup(countryCode);
-
-      ipContentEl.innerHTML = `
-        <div class="ip-content-premium">
-          <div class="ip-value">${escapeHtml(ip)}</div>
-          <div class="ip-meta">
-            <span class="ip-flag">${flagMarkup}</span>
-            <span>${escapeHtml(country)}</span>
-          </div>
-          <div class="ip-city">${city ? escapeHtml(city) : "Location unavailable"}</div>
-        </div>
-      `;
+      const payload = {
+        ip: data.ip || "Unknown",
+        countryCode: data.countryCode || "",
+        country: resolveCountryName(data.country, data.countryCode || ""),
+        city: data.city || "",
+      };
+      renderIpPayload(payload);
+      writeCachedValue(IP_CACHE_KEY, payload);
     } catch (error) {
       reportError("IP widget request failed", error);
+      const cached = readCachedValue(IP_CACHE_KEY, IP_CACHE_TTL_MS);
+      if (cached) {
+        renderIpPayload(cached);
+        return;
+      }
       ipContentEl.textContent = "Данные IP недоступны";
     }
+  }
+
+  function renderIpPayload(payload) {
+    if (!ipContentEl || !payload) return;
+    const flagMarkup = renderCountryFlagMarkup(payload.countryCode);
+    ipContentEl.innerHTML = `
+      <div class="ip-content-premium">
+        <div class="ip-value">${escapeHtml(payload.ip || "Unknown")}</div>
+        <div class="ip-meta">
+          <span class="ip-flag">${flagMarkup}</span>
+          <span>${escapeHtml(payload.country || "Unknown country")}</span>
+        </div>
+        <div class="ip-city">${payload.city ? escapeHtml(payload.city) : "Location unavailable"}</div>
+      </div>
+    `;
   }
 
   function submitWeatherFromInput({ restoreOnEmpty }) {
@@ -766,4 +830,71 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function readCachedValue(key, ttlMs) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return null;
+    const ts = Number(parsed.ts);
+    if (!Number.isFinite(ts)) return null;
+    if (Date.now() - ts > ttlMs) return null;
+    return parsed.data ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function readWeatherCacheEntry(cityKey, ttlMs) {
+  if (!cityKey) return null;
+  try {
+    const raw = localStorage.getItem(WEATHER_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const entry = parsed?.entries?.[cityKey];
+    if (!entry) return null;
+    const ts = Number(entry.ts);
+    if (!Number.isFinite(ts) || Date.now() - ts > ttlMs) return null;
+    return entry.data ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function writeWeatherCacheEntry(cityKey, data) {
+  if (!cityKey) return;
+  try {
+    const raw = localStorage.getItem(WEATHER_CACHE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    const entries = parsed?.entries && typeof parsed.entries === "object" ? parsed.entries : {};
+    entries[cityKey] = { ts: Date.now(), data };
+    localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify({ entries }));
+  } catch {
+    // no-op
+  }
+}
+
+function writeCachedValue(key, data) {
+  try {
+    localStorage.setItem(
+      key,
+      JSON.stringify({
+        ts: Date.now(),
+        data,
+      })
+    );
+  } catch {
+    // no-op
+  }
+}
+
+function formatTime24(value) {
+  const date = new Date(value || Date.now());
+  return date.toLocaleTimeString("ru-RU", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
 }

@@ -9,16 +9,23 @@
         try {
           document.documentElement.classList.add("booting");
           const bgRaw = localStorage.getItem("chrome-clone-background-image-v1");
+          const templateRaw = localStorage.getItem("chrome-clone-background-template-v1");
           if (bgRaw) {
             document.documentElement.classList.add("custom-bg");
             document.documentElement.style.setProperty("--user-bg", `url("${bgRaw.replaceAll('"', '\\"')}")`);
           }
+          if (templateRaw === "anime-neon") {
+            document.documentElement.classList.add("shortcuts-light-skin");
+          }
           const raw = localStorage.getItem("chrome-clone-page-settings-v1");
-          if (!raw) return;
+          if (!raw) {
+            document.documentElement.classList.add("pref-hide-widgets");
+            return;
+          }
           const parsed = JSON.parse(raw);
           if (parsed?.theme === "light") document.documentElement.classList.add("theme-light");
           if (parsed?.showShortcuts === false) document.documentElement.classList.add("pref-hide-shortcuts");
-          if (parsed?.showWidgets === false) document.documentElement.classList.add("pref-hide-widgets");
+          if (parsed?.showWidgets !== true) document.documentElement.classList.add("pref-hide-widgets");
         } catch {
           // no-op
         }
@@ -26,15 +33,29 @@
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./src/styles/main.css" />
+    <link
+      rel="preload"
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap"
+      as="style"
+      onload="this.onload=null;this.rel='stylesheet'"
+    />
+    <link
+      rel="preload"
+      href="./src/styles/main.css"
+      as="style"
+      onload="this.onload=null;this.rel='stylesheet'"
+    />
+    <noscript>
+      <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet" />
+      <link rel="stylesheet" href="./src/styles/main.css" />
+    </noscript>
     <link rel="shortcut icon" href="./assets/icons/chrome-icon.ico" type="image/x-icon" />
   </head>
   <body>
     <div class="page">
       <header class="topbar">
         <a class="gmail-link" href="https://mail.google.com">
-          <img src="./assets/icons/gmail-icon.svg" alt="" aria-hidden="true" />
+          <img src="./assets/icons/gmail-icon.svg" width="17" height="17" alt="" aria-hidden="true" />
           <span>Gmail</span>
         </a>
         <div class="apps-wrap">
@@ -65,6 +86,7 @@
         <button id="clearSearchHistoryBtn" class="settings-action-btn" type="button">Clear search history</button>
         <div class="settings-subheading">Background</div>
         <button id="setCustomBackgroundBtn" class="settings-action-btn" type="button">Set custom background</button>
+        <button id="chooseTemplateBtn" class="settings-action-btn" type="button">Choose a template</button>
         <button id="resetBackgroundBtn" class="settings-action-btn" type="button">Reset background</button>
         <div class="settings-subheading">Shortcuts</div>
         <div class="settings-item">
@@ -86,11 +108,20 @@
         <button id="clearWidgetsDataBtn" class="settings-action-btn" type="button">Clear widgets data</button>
         <button id="resetUserDataBtn" class="settings-reset-btn" type="button">Reset all user data</button>
       </div>
+      <div id="templatesMenu" class="overlay-menu settings-menu templates-menu" role="menu" aria-label="Background templates">
+        <h3>Templates</h3>
+        <button id="templatesBackBtn" class="settings-action-btn templates-back-btn" type="button" aria-label="Back to settings">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M14.5 6.5L9 12l5.5 5.5" />
+          </svg>
+        </button>
+        <div id="templatesGrid" class="templates-grid" aria-label="Template backgrounds"></div>
+      </div>
       <div id="appsMenu" class="overlay-menu apps-menu" role="menu" aria-label="Google services"></div>
       <main class="hero">
         <form id="searchForm" class="search-bar" autocomplete="off">
           <span class="s-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="11" cy="11" r="7"></circle>
               <line x1="16.65" y1="16.65" x2="21" y2="21"></line>
             </svg>
