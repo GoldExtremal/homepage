@@ -1,48 +1,57 @@
-# [Домашняя страница для Google Chrome](https://goldextremal.github.io/homepage/)
+# [Домашняя страница Chrome](https://goldextremal.github.io/homepage/)
 
-Кастомная стартовая страница в стиле Chrome New Tab: поиск, шорткаты, виджеты и меню сервисов.
+Кастомная стартовая страница в стиле Chrome New Tab: поиск, шорткаты, виджеты, меню сервисов Google, темы и шаблоны фона.
 
 ![Превью страницы](./assets/preview.png)
 
-## Основные возможности
+## Возможности
 
-- Поиск с подсказками Google и локальной историей запросов.
-- Шорткаты: добавление, удаление, редактирование и drag-and-drop перестановка.
-- Виджеты (погода, валюты, IP/регион) с перестановкой местами.
-- Меню Google-сервисов в верхней панели.
-- Настройки страницы: показ/скрытие шорткатов и виджетов, очистка пользовательских данных.
-- Переключение тёмной и светлой темы через тумблер `Dark mode`.
+- Поиск с Google Suggest + локальная история запросов.
+- Шорткаты: добавление, редактирование, удаление, drag-and-drop перестановка.
+- Лимит шорткатов: до 5 карточек.
+- Виджеты: погода, курсы валют, IP/регион.
+- Перестановка виджетов drag-and-drop.
+- Тёмная/светлая тема через `Dark mode`.
+- Кастомный фон из файла.
+- Меню `Choose a template` с готовыми шаблонами.
+- Меню сервисов Google (кнопка из 9 точек).
+- Очистка пользовательских данных из меню `Settings`.
 
 ## Настройка в Chrome
 
-1. Откройте страницу настроек внешнего вида: `chrome://settings/appearance` и активируйте переключатель `Show home button` (Показать кнопку «Главная»).
-2. В поле назначения вместо новой страницы вставьте ссылку: `https://goldextremal.github.io/homepage/`.
-3. Установите расширение для редиректа новой вкладки: `https://chromewebstore.google.com/detail/new-tab-redirect/icpgjfneehieebagbmdbhnlpiopdcmna`.
-4. Если перенаправление не сработало автоматически, откройте настройки расширения, вставьте ссылку `https://goldextremal.github.io/homepage/` и нажмите `Save`.
+1. Откройте `chrome://settings/appearance` и включите `Show home button` (Показать кнопку «Главная»).
+2. В поле для домашней страницы укажите:
+   `https://goldextremal.github.io/homepage/`
+3. Установите расширение New Tab Redirect:
+   `https://chromewebstore.google.com/detail/new-tab-redirect/icpgjfneehieebagbmdbhnlpiopdcmna`
+4. Если новая вкладка не переадресуется автоматически:
+   - откройте настройки расширения,
+   - вставьте `https://goldextremal.github.io/homepage/`,
+   - нажмите `Save`.
 
 <p align="center">
-  <img src="./assets/extentions.png" alt="Настройка расширения New Tab Redirect" width="310" />
+  <img src="./assets/extentions.png" alt="Настройка расширения New Tab Redirect" width="155" />
 </p>
-
-## Стек
-
-- HTML + CSS + JavaScript (без сборки)
-- ES Modules
-- `localStorage` для пользовательских данных
 
 ## Локальный запуск
 
 1. Откройте терминал в корне проекта.
-2. Запустите локальный HTTP-сервер:
+2. Запустите локальный сервер:
 
 ```bash
 python3 -m http.server 8080
 ```
 
-3. Откройте в браузере: `http://localhost:8080`.
-4. Для остановки сервера нажмите `Ctrl + C` в терминале.
+3. Откройте в браузере `http://localhost:8080`.
+4. Для остановки сервера нажмите `Ctrl + C`.
 
-Примечание: не открывайте `index.html` напрямую как `file://...`, часть функций (API-запросы и загрузка ассетов) может работать некорректно.
+Важно: не запускайте через `file://...` (часть API/ассетов работает некорректно без HTTP-сервера).
+
+## Стек
+
+- HTML + CSS + JavaScript (ES Modules, без фреймворков)
+- `localStorage` для пользовательских данных
+- Service Worker для кеша статики
 
 ## Структура проекта
 
@@ -51,79 +60,41 @@ python3 -m http.server 8080
 ├── assets/
 │   ├── preview.png
 │   ├── extentions.png
+│   ├── templates/
+│   │   ├── full/
+│   │   └── thumb/
 │   └── icons/
 │       ├── chrome-icon.ico
 │       ├── gmail-icon.svg
 │       └── flags/
-│           └── *.svg
 ├── src/
 │   ├── js/
 │   │   ├── config/
-│   │   │   └── constants.js
 │   │   ├── features/
-│   │   │   ├── appsMenu.js
-│   │   │   ├── googleServicesMenu.js
-│   │   │   ├── search.js
-│   │   │   ├── settings.js
-│   │   │   ├── shortcuts.js
-│   │   │   └── widgets.js
 │   │   ├── utils/
-│   │   │   ├── log.js
-│   │   │   ├── reorder.js
-│   │   │   └── url.js
 │   │   └── main.js
 │   └── styles/
-│       ├── main.css
 │       ├── base/
-│       │   └── index.css
 │       ├── components/
-│       │   └── index.css
 │       ├── layout/
-│       │   └── index.css
-│       └── widgets/
-│           └── index.css
+│       ├── widgets/
+│       └── main.css
+├── sw.js
 ├── index.html
 └── README.md
 ```
 
-## Модули и ответственность
+## Настройки и данные
 
-- `src/js/main.js`
-  Инициализирует все фичи, связывает глобальные обработчики клика/Escape.
-- `src/js/features/search.js`
-  Поиск, подсказки Google Suggest (JSONP), локальная история запросов.
-- `src/js/features/shortcuts.js`
-  CRUD шорткатов, лимит на количество, drag-and-drop перестановка, определение favicon.
-- `src/js/features/widgets.js`
-  Погода, валюты, IP/регион, drag-and-drop перестановка виджетов.
-  Данные виджетов загружаются лениво и только когда виджеты видимы.
-- `src/js/features/settings.js`
-  Меню настроек, переключение темы (Dark/Light), управление видимостью блоков, действия очистки/сброса данных.
-  Публикует событие `page-settings:widgets-visibility`.
-- `src/js/features/appsMenu.js`
-  Открытие/закрытие меню сервисов; ленивый рендер содержимого при первом открытии.
-- `src/js/features/googleServicesMenu.js`
-  Модель и рендер меню сервисов Google (заголовок, сетка сервисов, кнопка).
+Хранятся в `localStorage`:
 
-### Утилиты
+- `chrome-clone-page-settings-v1`
+- `chrome-clone-shortcuts-v1`
+- `chrome-clone-search-history-v1`
+- `chrome-clone-weather-city-v1`
+- `chrome-clone-widgets-order-v1`
+- `chrome-clone-background-image-v1`
+- `chrome-clone-background-template-v1`
+- кеш виджетов (`weather/currency/ip`)
 
-- `src/js/utils/url.js` — нормализация URL и доменные эвристики.
-- `src/js/utils/reorder.js` — общая логика анимации/перестановки для DnD.
-- `src/js/utils/log.js` — единый мягкий лог ошибок в консоль.
-
-### Стили
-
-- `src/styles/main.css` — точка входа стилей (`@import` слоёв).
-- `src/styles/base/index.css` — CSS-переменные, базовые reset и фон.
-- `src/styles/layout/index.css` — topbar, меню, layout секций.
-- `src/styles/components/index.css` — поиск, шорткаты, модальные элементы.
-- `src/styles/widgets/index.css` — карточки и адаптив виджетов.
-
-## localStorage
-
-- `chrome-clone-shortcuts-v1` — пользовательские шорткаты.
-- `chrome-clone-weather-city-v1` — последний выбранный город погоды.
-- `chrome-clone-widgets-order-v1` — порядок виджетов.
-- `chrome-clone-search-history-v1` — локальная история поиска.
-- `chrome-clone-page-settings-v1` — настройки показа шорткатов/виджетов.
-  и выбранной темы (`dark`/`light`).
+Кнопка `Reset all user data` очищает пользовательские данные и перезагружает страницу.
