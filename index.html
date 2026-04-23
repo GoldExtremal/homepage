@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="ru">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>New Tab</title>
+    <title>Новая вкладка</title>
     <script>
       (() => {
         try {
@@ -24,6 +24,7 @@
             return;
           }
           const parsed = JSON.parse(raw);
+          document.documentElement.lang = parsed?.language === "en" ? "en" : "ru";
           if (parsed?.theme === "light") document.documentElement.classList.add("theme-light");
           if (parsed?.showShortcuts === false) document.documentElement.classList.add("pref-hide-shortcuts");
           if (parsed?.showWidgets !== true) document.documentElement.classList.add("pref-hide-widgets");
@@ -62,14 +63,14 @@
           <span>Gmail</span>
         </a>
         <div class="apps-wrap">
-          <button id="appsToggle" class="apps" type="button" aria-label="Google apps" aria-haspopup="true" aria-expanded="false">
+          <button id="appsToggle" class="apps" type="button" aria-label="Приложения Google" data-i18n-aria-label="apps.toggleAria" aria-haspopup="true" aria-expanded="false">
             <span></span><span></span><span></span>
             <span></span><span></span><span></span>
             <span></span><span></span><span></span>
           </button>
         </div>
         <div class="settings-wrap">
-          <button id="settingsToggle" class="settings-btn" type="button" aria-label="Page settings" aria-haspopup="true" aria-expanded="false">
+          <button id="settingsToggle" class="settings-btn" type="button" aria-label="Настройки страницы" data-i18n-aria-label="settings.toggleSettingsAria" aria-haspopup="true" aria-expanded="false">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="3.4"></circle>
               <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.86l.06.06a2 2 0 1 1-2.82 2.82l-.06-.06a1.7 1.7 0 0 0-1.86-.34 1.7 1.7 0 0 0-1.04 1.56V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.04-1.56 1.7 1.7 0 0 0-1.86.34l-.06.06a2 2 0 1 1-2.82-2.82l.06-.06a1.7 1.7 0 0 0 .34-1.86 1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.56-1.04 1.7 1.7 0 0 0-.34-1.86l-.06-.06a2 2 0 1 1 2.82-2.82l.06.06a1.7 1.7 0 0 0 1.86.34A1.7 1.7 0 0 0 10.04 3.1V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.86-.34l.06-.06a2 2 0 1 1 2.82 2.82l-.06.06a1.7 1.7 0 0 0-.34 1.86A1.7 1.7 0 0 0 21 10.04h.1a2 2 0 1 1 0 4H21a1.7 1.7 0 0 0-1.56 1.04Z"></path>
@@ -77,50 +78,68 @@
           </button>
         </div>
       </header>
-      <div id="settingsMenu" class="overlay-menu settings-menu" role="menu" aria-label="Page settings">
-        <h3>Settings</h3>
+      <div id="settingsMenu" class="overlay-menu settings-menu" role="menu" aria-label="Настройки страницы" data-i18n-aria-label="settings.menuAria">
+        <h3 id="settingsTitle" data-i18n="settings.title">Настройки</h3>
         <div class="settings-item">
-          <span>Dark mode</span>
-          <label class="toggle" for="toggleDarkMode" aria-label="Toggle dark mode">
-            <input id="toggleDarkMode" type="checkbox" checked aria-label="Dark mode" />
+          <span data-i18n="settings.language">Язык</span>
+          <label class="language-toggle" for="toggleLanguage" aria-label="Выбор языка" data-i18n-aria-label="settings.languageAria">
+            <input id="toggleLanguage" type="checkbox" checked />
+            <span class="language-toggle-track">
+              <span class="language-flag language-flag-us" aria-hidden="true">
+                <img src="./assets/icons/flags/us.svg" alt="" />
+              </span>
+              <span class="language-flag language-flag-ru" aria-hidden="true">
+                <img src="./assets/icons/flags/ru.svg" alt="" />
+              </span>
+              <span class="language-toggle-thumb" aria-hidden="true">
+                <img class="language-thumb-us" src="./assets/icons/flags/us.svg" alt="" />
+                <img class="language-thumb-ru" src="./assets/icons/flags/ru.svg" alt="" />
+              </span>
+            </span>
+          </label>
+        </div>
+        <div class="settings-item">
+          <span data-i18n="settings.darkMode">Тёмная тема</span>
+          <label class="toggle" for="toggleDarkMode" aria-label="Переключить тему" data-i18n-aria-label="settings.toggleDarkModeAria">
+            <input id="toggleDarkMode" type="checkbox" checked aria-label="Переключить тему" data-i18n-aria-label="settings.toggleDarkModeAria" />
             <span class="toggle-track"></span>
           </label>
         </div>
-        <button id="clearSearchHistoryBtn" class="settings-action-btn" type="button">Clear search history</button>
-        <div class="settings-subheading">Background</div>
-        <button id="setCustomBackgroundBtn" class="settings-action-btn" type="button">Set custom background</button>
-        <button id="chooseTemplateBtn" class="settings-action-btn" type="button">Choose a template</button>
-        <button id="resetBackgroundBtn" class="settings-action-btn" type="button">Reset background</button>
-        <div class="settings-subheading">Shortcuts</div>
+        <button id="clearSearchHistoryBtn" class="settings-action-btn" type="button" data-i18n="settings.clearSearchHistory">Очистить историю поиска</button>
+        <div class="settings-subheading" data-i18n="settings.background">Фон</div>
+        <button id="setCustomBackgroundBtn" class="settings-action-btn" type="button" data-i18n="settings.setCustomBackground">Установить свой фон</button>
+        <button id="chooseTemplateBtn" class="settings-action-btn" type="button" data-i18n="settings.chooseTemplate">Выбрать шаблон</button>
+        <button id="resetBackgroundBtn" class="settings-action-btn" type="button" data-i18n="settings.resetBackground">Сбросить фон</button>
+        <div class="settings-subheading" data-i18n="settings.shortcuts">Шорткаты</div>
         <div class="settings-item">
-          <span>Show shortcuts</span>
-          <label class="toggle" for="toggleShortcuts" aria-label="Toggle shortcuts visibility">
-            <input id="toggleShortcuts" type="checkbox" aria-label="Show shortcuts" />
+          <span data-i18n="settings.showShortcuts">Показать ярлыки</span>
+          <label class="toggle" for="toggleShortcuts" aria-label="Показать ярлыки" data-i18n-aria-label="settings.toggleShortcutsAria">
+            <input id="toggleShortcuts" type="checkbox" aria-label="Показать ярлыки" data-i18n-aria-label="settings.toggleShortcutsAria" />
             <span class="toggle-track"></span>
           </label>
         </div>
-        <button id="resetShortcutsBtn" class="settings-action-btn" type="button">Reset shortcuts</button>
-        <div class="settings-subheading">Widgets</div>
+        <button id="resetShortcutsBtn" class="settings-action-btn" type="button" data-i18n="settings.resetShortcuts">Сбросить ярлыки</button>
+        <div class="settings-subheading" data-i18n="settings.widgets">Виджеты</div>
         <div class="settings-item">
-          <span>Show widgets</span>
-          <label class="toggle" for="toggleWidgets" aria-label="Toggle widgets visibility">
-            <input id="toggleWidgets" type="checkbox" aria-label="Show widgets" />
+          <span data-i18n="settings.showWidgets">Показать виджеты</span>
+          <label class="toggle" for="toggleWidgets" aria-label="Показать виджеты" data-i18n-aria-label="settings.toggleWidgetsAria">
+            <input id="toggleWidgets" type="checkbox" aria-label="Показать виджеты" data-i18n-aria-label="settings.toggleWidgetsAria" />
             <span class="toggle-track"></span>
           </label>
         </div>
-        <button id="clearWidgetsDataBtn" class="settings-action-btn" type="button">Clear widgets data</button>
-        <button id="resetUserDataBtn" class="settings-reset-btn" type="button">Reset all user data</button>
+        <button id="clearWidgetsDataBtn" class="settings-action-btn" type="button" data-i18n="settings.clearWidgetsData">Очистить данные виджетов</button>
+        <button id="resetUserDataBtn" class="settings-reset-btn" type="button" data-i18n="settings.resetUserData">Сбросить всё</button>
       </div>
-      <div id="templatesMenu" class="overlay-menu settings-menu templates-menu" role="menu" aria-label="Background templates">
-        <h3>Templates</h3>
-        <button id="templatesBackBtn" class="settings-action-btn templates-back-btn" type="button" aria-label="Back to settings">
+      <div id="templatesMenu" class="overlay-menu settings-menu templates-menu" role="menu" aria-label="Шаблоны фона" data-i18n-aria-label="settings.templatesMenuAria">
+        <h3 data-i18n="settings.templatesTitle">Шаблоны</h3>
+        <button id="templatesBackBtn" class="settings-action-btn templates-back-btn" type="button" aria-label="Назад к настройкам" data-i18n-aria-label="settings.backToSettingsAria">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M14.5 6.5L9 12l5.5 5.5" />
           </svg>
         </button>
         <div id="templatesGrid" class="templates-grid" aria-label="Template backgrounds"></div>
       </div>
-      <div id="appsMenu" class="overlay-menu apps-menu" role="menu" aria-label="Google services"></div>
+      <div id="appsMenu" class="overlay-menu apps-menu" role="menu" aria-label="Сервисы Google" data-i18n-aria-label="apps.menuAria"></div>
       <main class="hero">
         <form id="searchForm" class="search-bar" autocomplete="off">
           <span class="s-icon" aria-hidden="true">
@@ -129,17 +148,17 @@
               <line x1="16.65" y1="16.65" x2="21" y2="21"></line>
             </svg>
           </span>
-          <label class="sr-only" for="searchInput">Search Google or type a URL</label>
-          <input id="searchInput" type="text" placeholder="Search Google or type a URL" />
-          <ul id="searchSuggestions" class="search-suggestions" role="listbox" aria-label="Search suggestions"></ul>
+          <label class="sr-only" for="searchInput" data-i18n="search.ariaLabel">Найдите в Google или введите URL-адрес</label>
+          <input id="searchInput" type="text" placeholder="Найдите в Google или введите URL-адрес" data-i18n-placeholder="search.placeholder" />
+          <ul id="searchSuggestions" class="search-suggestions" role="listbox" aria-label="Подсказки поиска" data-i18n-aria-label="search.suggestionsAria"></ul>
         </form>
 
-        <ul id="shortcutsList" class="shortcuts" aria-label="Shortcuts"></ul>
+        <ul id="shortcutsList" class="shortcuts" aria-label="Шорткаты" data-i18n-aria-label="shortcuts.listAria"></ul>
 
         <section class="widgets-panel" aria-label="Widgets">
           <article class="widget-card weather-widget" data-widget-id="weather">
             <div class="widget-head">
-              <h3>Погода</h3>
+              <h3 data-i18n="widgets.weather">Погода</h3>
             </div>
             <form id="weatherForm" class="widget-form" autocomplete="off">
               <span class="weather-location-icon" aria-hidden="true">
@@ -148,21 +167,21 @@
                   <circle cx="12" cy="11" r="2.2"></circle>
                 </svg>
               </span>
-              <input id="weatherCityInput" type="text" placeholder="Город" />
+              <input id="weatherCityInput" type="text" placeholder="Город" data-i18n-placeholder="widgets.cityPlaceholder" />
             </form>
-            <div id="weatherContent" class="widget-content">Загружаю погоду...</div>
+            <div id="weatherContent" class="widget-content" data-i18n="widgets.loadingWeather">Загружаю погоду...</div>
           </article>
 
           <article class="widget-card currency-widget" data-widget-id="currency">
             <div class="widget-head">
-              <h3>Курсы валют</h3>
+              <h3 data-i18n="widgets.currency">Курсы валют</h3>
             </div>
-            <div id="currencyContent" class="widget-content">Загружаю курсы...</div>
+            <div id="currencyContent" class="widget-content" data-i18n="widgets.loadingCurrency">Загружаю курсы...</div>
           </article>
 
           <article class="widget-card ip-widget" data-widget-id="ip">
             <div class="widget-head">
-              <h3>IP и регион</h3>
+              <h3 data-i18n="widgets.ipRegion">IP и регион</h3>
             </div>
             <div class="ip-graphic" aria-hidden="true">
               <svg viewBox="0 0 96 96" fill="none">
@@ -175,7 +194,7 @@
                 <path d="M24 20h18M54 18l18 9M21 26l-2 30M28 58l18-4M57 58l15 12"></path>
               </svg>
             </div>
-            <div id="ipContent" class="widget-content">Loading IP…</div>
+            <div id="ipContent" class="widget-content" data-i18n="widgets.loadingIp">Загружаю IP...</div>
           </article>
         </section>
       </main>
@@ -184,22 +203,22 @@
 
     <dialog id="shortcutDialog" class="shortcut-dialog">
       <form id="shortcutForm" class="dialog-form" method="dialog" autocomplete="off">
-        <h2 id="shortcutDialogTitle">Add shortcut</h2>
+        <h2 id="shortcutDialogTitle" data-i18n="dialog.addShortcut">Добавить шорткат</h2>
         <label>
-          Name
+          <span data-i18n="dialog.name">Название</span>
           <input id="shortcutName" type="text" maxlength="30" required />
         </label>
         <label>
-          URL
+          <span data-i18n="dialog.url">URL</span>
           <input id="shortcutUrl" type="url" placeholder="https://example.com" required />
         </label>
         <label>
-          Icon URL (optional)
+          <span data-i18n="dialog.iconOptional">URL иконки (опционально)</span>
           <input id="shortcutIcon" type="url" placeholder="https://example.com/icon.png" />
         </label>
         <div class="dialog-actions">
-          <button id="cancelDialog" type="button">Cancel</button>
-          <button type="submit">Done</button>
+          <button id="cancelDialog" type="button" data-i18n="dialog.cancel">Отмена</button>
+          <button id="confirmDialogBtn" type="submit" data-i18n="dialog.done">Готово</button>
         </div>
       </form>
     </dialog>
@@ -208,8 +227,8 @@
       <li class="shortcut-item">
         <button class="shortcut-menu-btn" type="button" aria-label="More actions">⋮</button>
         <div class="shortcut-menu" role="menu">
-          <button class="shortcut-action-edit" type="button" role="menuitem">Edit shortcut</button>
-          <button class="shortcut-action-remove" type="button" role="menuitem">Remove</button>
+          <button class="shortcut-action-edit" type="button" role="menuitem">Изменить</button>
+          <button class="shortcut-action-remove" type="button" role="menuitem">Удалить</button>
         </div>
         <a class="shortcut-link" title="Open shortcut">
           <span class="shortcut-icon"></span>

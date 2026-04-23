@@ -312,7 +312,7 @@ body.shortcuts-dragging * {
   letter-spacing: -0.01em;
 }
 
-.shortcut-link[aria-label="Add shortcut"] .shortcut-icon {
+.shortcut-item-add .shortcut-link .shortcut-icon {
   font-size: 46px;
   font-weight: 300;
 }

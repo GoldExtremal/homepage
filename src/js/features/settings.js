@@ -8,8 +8,16 @@ import {
   WEATHER_CITY_KEY,
   WIDGETS_ORDER_KEY,
 } from "../config/constants.js";
+import {
+  DEFAULT_LANGUAGE,
+  LANGUAGE_CHANGE_EVENT,
+  setCurrentLanguage,
+  t,
+  resolveLanguage,
+} from "../i18n.js";
 
 const DEFAULT_SETTINGS = {
+  language: DEFAULT_LANGUAGE,
   theme: "dark",
   showShortcuts: true,
   showWidgets: false,
@@ -38,6 +46,7 @@ export function initPageSettings({
   settingsToggleEl,
   shortcutsEl,
   widgetsPanelEl,
+  languageToggleEl,
   darkModeToggleEl,
   shortcutsToggleEl,
   widgetsToggleEl,
@@ -62,6 +71,7 @@ export function initPageSettings({
 
   let settings = readSettings();
   let templateGridRendered = false;
+  applyLanguage(settings.language, { emit: false });
   applyStoredBackground();
   applySettings(settings);
   emitWidgetsVisibility(settings.showWidgets);
@@ -78,6 +88,15 @@ export function initPageSettings({
       return;
     }
     openSettingsMenu();
+  });
+
+  languageToggleEl?.addEventListener("change", () => {
+    settings = {
+      ...settings,
+      language: languageToggleEl.checked ? "ru" : "en",
+    };
+    applyLanguage(settings.language);
+    persistSettings(settings);
   });
 
   darkModeToggleEl.addEventListener("change", () => {
@@ -109,14 +128,14 @@ export function initPageSettings({
   });
 
   resetUserDataBtnEl?.addEventListener("click", () => {
-    const isConfirmed = window.confirm("Reset all user data on this page? This will remove shortcuts, widget order, weather city, and search history.");
+    const isConfirmed = window.confirm(t("confirm.resetUserData"));
     if (!isConfirmed) return;
     RESETTABLE_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
     window.location.reload();
   });
 
   clearSearchHistoryBtnEl?.addEventListener("click", () => {
-    const isConfirmed = window.confirm("Clear local search history?");
+    const isConfirmed = window.confirm(t("confirm.clearSearchHistory"));
     if (!isConfirmed) return;
     localStorage.removeItem(SEARCH_HISTORY_KEY);
     window.location.reload();
@@ -157,7 +176,7 @@ export function initPageSettings({
   });
 
   resetBackgroundBtnEl?.addEventListener("click", () => {
-    const isConfirmed = window.confirm("Reset background to default dark theme?");
+    const isConfirmed = window.confirm(t("confirm.resetBackground"));
     if (!isConfirmed) return;
     localStorage.removeItem(BACKGROUND_IMAGE_KEY);
     localStorage.removeItem(BACKGROUND_TEMPLATE_KEY);
@@ -172,14 +191,14 @@ export function initPageSettings({
   });
 
   resetShortcutsBtnEl?.addEventListener("click", () => {
-    const isConfirmed = window.confirm("Reset shortcuts to default?");
+    const isConfirmed = window.confirm(t("confirm.resetShortcuts"));
     if (!isConfirmed) return;
     localStorage.removeItem(SHORTCUTS_STORAGE_KEY);
     window.location.reload();
   });
 
   clearWidgetsDataBtnEl?.addEventListener("click", () => {
-    const isConfirmed = window.confirm("Clear widgets data (weather city and widget order)?");
+    const isConfirmed = window.confirm(t("confirm.clearWidgetsData"));
     if (!isConfirmed) return;
     localStorage.removeItem(WEATHER_CITY_KEY);
     localStorage.removeItem(WIDGETS_ORDER_KEY);
@@ -191,12 +210,12 @@ export function initPageSettings({
     const file = backgroundFileInputEl.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      window.alert("Please select an image file.");
+      window.alert(t("misc.chooseImageError"));
       backgroundFileInputEl.value = "";
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      window.alert("Image is too large. Please choose a file up to 5 MB.");
+      window.alert(t("misc.imageTooLarge"));
       backgroundFileInputEl.value = "";
       return;
     }
@@ -208,11 +227,26 @@ export function initPageSettings({
       applyBackground(dataUrl);
       applyTemplateShortcutStyle(null);
     } catch {
-      window.alert("Failed to save custom background. Please try a smaller image.");
+      window.alert(t("misc.saveBackgroundError"));
     } finally {
       backgroundFileInputEl.value = "";
     }
   });
+
+  function applyLanguage(language, { emit = true } = {}) {
+    const nextLanguage = setCurrentLanguage(language, { emit: false });
+    applyStaticTranslations(nextLanguage);
+    if (templateGridRendered) {
+      renderTemplateGrid();
+    }
+    if (emit) {
+      window.dispatchEvent(
+        new CustomEvent(LANGUAGE_CHANGE_EVENT, {
+          detail: { language: nextLanguage },
+        })
+      );
+    }
+  }
 
   function applySettings(nextSettings) {
     document.documentElement.classList.toggle("theme-light", nextSettings.theme === "light");
@@ -231,6 +265,9 @@ export function initPageSettings({
     darkModeToggleEl.checked = nextSettings.theme !== "light";
     shortcutsToggleEl.checked = Boolean(nextSettings.showShortcuts);
     widgetsToggleEl.checked = Boolean(nextSettings.showWidgets);
+    if (languageToggleEl) {
+      languageToggleEl.checked = resolveLanguage(nextSettings.language) === "ru";
+    }
   }
 
   function readSettings() {
@@ -238,8 +275,10 @@ export function initPageSettings({
       const raw = localStorage.getItem(PAGE_SETTINGS_KEY);
       if (!raw) return { ...DEFAULT_SETTINGS };
       const parsed = JSON.parse(raw);
+      const language = resolveLanguage(parsed?.language);
       const theme = parsed?.theme === "light" ? "light" : "dark";
       return {
+        language,
         theme,
         showShortcuts: typeof parsed?.showShortcuts === "boolean" ? parsed.showShortcuts : DEFAULT_SETTINGS.showShortcuts,
         showWidgets: typeof parsed?.showWidgets === "boolean" ? parsed.showWidgets : DEFAULT_SETTINGS.showWidgets,
@@ -327,7 +366,7 @@ export function initPageSettings({
     if (!templatesGridEl) return;
     const templateMarkup = TEMPLATE_BACKGROUNDS.map((template) => {
       return `
-        <button class="template-option" type="button" data-template-id="${template.id}" aria-label="Apply ${template.id} template">
+        <button class="template-option" type="button" data-template-id="${template.id}" aria-label="${t("settings.applyTemplateAria", { template: template.id })}">
           <img src="${template.thumbSrc}" alt="" loading="lazy" decoding="async" />
         </button>
       `;
@@ -358,6 +397,31 @@ export function initPageSettings({
     settingsMenuEl.classList.remove("open");
     templatesMenuEl.classList.remove("open");
     settingsToggleEl.setAttribute("aria-expanded", "false");
+  }
+
+  function applyStaticTranslations(language) {
+    document.title = t("page.title", {}, language);
+
+    const elements = document.querySelectorAll("[data-i18n]");
+    elements.forEach((node) => {
+      const key = node.getAttribute("data-i18n");
+      if (!key) return;
+      node.textContent = t(key, {}, language);
+    });
+
+    const placeholders = document.querySelectorAll("[data-i18n-placeholder]");
+    placeholders.forEach((node) => {
+      const key = node.getAttribute("data-i18n-placeholder");
+      if (!key || !(node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement)) return;
+      node.placeholder = t(key, {}, language);
+    });
+
+    const ariaLabels = document.querySelectorAll("[data-i18n-aria-label]");
+    ariaLabels.forEach((node) => {
+      const key = node.getAttribute("data-i18n-aria-label");
+      if (!key) return;
+      node.setAttribute("aria-label", t(key, {}, language));
+    });
   }
 
   return {

@@ -279,6 +279,95 @@ html.pref-hide-widgets .widgets-panel {
   background: rgba(147, 176, 234, 0.11);
 }
 
+.language-toggle {
+  position: relative;
+  width: 48px;
+  height: 28px;
+  display: inline-flex;
+  cursor: pointer;
+}
+
+.language-toggle input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  margin: 0;
+}
+
+.language-toggle-track {
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  border: 1px solid rgba(188, 206, 239, 0.38);
+  background: rgba(22, 33, 53, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+.language-flag {
+  width: 22px;
+  height: 22px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  opacity: 0.4;
+  transition: opacity 0.16s ease;
+}
+
+.language-flag img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.language-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.24),
+    0 6px 10px rgba(0, 0, 0, 0.2);
+  transition: transform 0.16s ease;
+  overflow: hidden;
+}
+
+.language-toggle-thumb img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.language-toggle input:not(:checked) + .language-toggle-track .language-thumb-us {
+  opacity: 1;
+}
+
+.language-toggle input:checked + .language-toggle-track .language-thumb-ru {
+  opacity: 1;
+}
+
+.language-toggle input:checked + .language-toggle-track .language-toggle-thumb {
+  transform: translateX(20px);
+}
+
+.language-toggle input:focus-visible + .language-toggle-track {
+  border-color: rgba(160, 190, 242, 0.72);
+}
+
 .templates-back-btn {
   position: absolute;
   top: 12px;
@@ -607,6 +696,11 @@ html.theme-light .apps-menu h3 {
 html.theme-light .settings-item,
 html.theme-light .settings-action-btn {
   color: #294874;
+}
+
+html.theme-light .language-toggle-track {
+  border-color: rgba(124, 161, 219, 0.48);
+  background: rgba(231, 241, 255, 0.72);
 }
 
 html.theme-light .settings-action-btn:hover {

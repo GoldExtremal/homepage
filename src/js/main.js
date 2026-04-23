@@ -4,6 +4,7 @@ import { initSearch } from "./features/search.js";
 import { initPageSettings } from "./features/settings.js";
 import { initShortcuts } from "./features/shortcuts.js";
 import { initWidgets } from "./features/widgets.js";
+import { LANGUAGE_CHANGE_EVENT } from "./i18n.js";
 
 const search = initSearch({
   formEl: document.getElementById("searchForm"),
@@ -31,6 +32,7 @@ const settings = initPageSettings({
   settingsToggleEl,
   shortcutsEl: document.getElementById("shortcutsList"),
   widgetsPanelEl: document.querySelector(".widgets-panel"),
+  languageToggleEl: document.getElementById("toggleLanguage"),
   darkModeToggleEl: document.getElementById("toggleDarkMode"),
   shortcutsToggleEl: document.getElementById("toggleShortcuts"),
   widgetsToggleEl: document.getElementById("toggleWidgets"),
@@ -51,6 +53,12 @@ appsToggleEl?.addEventListener("click", () => {
 
 settingsToggleEl?.addEventListener("click", () => {
   appsMenu.closeAppsMenu();
+});
+
+window.addEventListener(LANGUAGE_CHANGE_EVENT, () => {
+  if (appsMenuEl?.childElementCount) {
+    renderGoogleServicesMenu(appsMenuEl);
+  }
 });
 
 const shortcuts = initShortcuts({

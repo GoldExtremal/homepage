@@ -5,6 +5,7 @@ import {
   WEATHER_CITY_KEY,
   WIDGETS_ORDER_KEY,
 } from "../config/constants.js";
+import { getCurrentLanguage, LANGUAGE_CHANGE_EVENT, t } from "../i18n.js";
 import { WIDGETS_VISIBILITY_EVENT } from "./settings.js";
 import {
   animateNeighborShift,
@@ -29,12 +30,17 @@ export function initWidgets({
 }) {
   initWidgetsReorder();
 
-  const savedCity = localStorage.getItem(WEATHER_CITY_KEY) || "Москва";
+  const savedCityRaw = localStorage.getItem(WEATHER_CITY_KEY) || "Москва";
+  const savedCity = sanitizeWeatherCityQuery(savedCityRaw) || "Москва";
   let lastWeatherCity = savedCity;
   let lastWeatherQueryKey = normalizeCityQuery(savedCity);
+  let lastWeatherPayload = null;
+  let lastCurrencyPayload = null;
+  let lastIpPayload = null;
+  const localizedCityCache = new Map();
   let widgetsDataLoaded = false;
   if (weatherCityInputEl) weatherCityInputEl.value = savedCity;
-  if (weatherCityInputEl) weatherCityInputEl.placeholder = "Город";
+  if (weatherCityInputEl) weatherCityInputEl.placeholder = t("widgets.cityPlaceholder");
   if (isWidgetsVisible()) {
     loadWidgetsData();
   }
@@ -43,6 +49,28 @@ export function initWidgets({
     const isVisible = Boolean(event?.detail?.visible);
     if (isVisible) {
       loadWidgetsData();
+    }
+  });
+
+  window.addEventListener(LANGUAGE_CHANGE_EVENT, () => {
+    if (weatherCityInputEl) weatherCityInputEl.placeholder = t("widgets.cityPlaceholder");
+    if (lastWeatherPayload) renderWeatherPayload(lastWeatherPayload, lastWeatherCity);
+    void refreshWeatherLocationLabel();
+    if (lastCurrencyPayload) renderCurrencyPayload(lastCurrencyPayload);
+    if (lastIpPayload) renderIpPayload(lastIpPayload);
+
+    if (!isWidgetsVisible()) {
+      return;
+    }
+
+    if (!widgetsDataLoaded) {
+      loadWidgetsData();
+      return;
+    }
+
+    if (widgetsDataLoaded) {
+      void loadCurrency();
+      void loadIpInfo({ force: true });
     }
   });
 
@@ -59,24 +87,27 @@ export function initWidgets({
     });
   }
 
-  async function loadWeather(city) {
+  async function loadWeather(city, { force = false } = {}) {
     if (!weatherContentEl) return;
-    const cityKey = normalizeCityQuery(city);
-    const cached = readWeatherCacheEntry(cityKey, WEATHER_CACHE_TTL_MS);
-    if (cached) {
-      renderWeatherPayload(cached, city);
-      return;
+    const normalizedCity = sanitizeWeatherCityQuery(city) || city;
+    const cityKey = normalizeCityQuery(normalizedCity);
+    if (!force) {
+      const cached = readWeatherCacheEntry(cityKey, WEATHER_CACHE_TTL_MS);
+      if (cached) {
+        renderWeatherPayload(cached, normalizedCity);
+        return;
+      }
     }
 
-    weatherContentEl.textContent = "Загружаю погоду...";
+    weatherContentEl.textContent = t("widgets.loadingWeather");
     applyWeatherVisualState(weatherContentEl, null);
 
     try {
-      const place = await geocodeCity(city);
+      const place = await geocodeCity(normalizedCity);
       if (!place) {
-        weatherContentEl.textContent = "Город не найден";
+        weatherContentEl.textContent = t("widgets.cityNotFound");
         if (weatherCityInputEl?.value.trim() === "") {
-          weatherCityInputEl.value = localStorage.getItem(WEATHER_CITY_KEY) || lastWeatherCity || savedCity;
+          weatherCityInputEl.value = sanitizeWeatherCityQuery(localStorage.getItem(WEATHER_CITY_KEY) || "") || lastWeatherCity || savedCity;
         }
         return;
       }
@@ -91,7 +122,7 @@ export function initWidgets({
 
       const temp = Math.round(current.temperature_2m);
       const feelsLike = Math.round(current.apparent_temperature);
-      const condition = weatherCodeToText(current.weather_code);
+      const weatherCode = Number(current.weather_code);
       const conditionGroup = weatherCodeToGroup(current.weather_code);
       const period = Number(current.is_day) === 1 ? "day" : "night";
       const icon = getWeatherIcon(conditionGroup, period);
@@ -101,26 +132,35 @@ export function initWidgets({
       const payload = {
         placeName: place.name || city,
         placeCountry: place.country || "",
+        countryCode: String(place.countryCode || "").toUpperCase(),
+        latitude: Number(place.latitude),
+        longitude: Number(place.longitude),
         temp,
         feelsLike,
-        condition,
+        weatherCode,
         conditionGroup,
         period,
         icon,
         wind,
         humidity,
       };
-      renderWeatherPayload(payload, city);
+      renderWeatherPayload(payload, normalizedCity);
+      void refreshWeatherLocationLabel();
       writeWeatherCacheEntry(cityKey, payload);
     } catch (error) {
       reportError("Weather widget request failed", error);
-      weatherContentEl.textContent = "Погода недоступна";
+      weatherContentEl.textContent = t("widgets.weatherUnavailable");
       applyWeatherVisualState(weatherContentEl, null);
     }
   }
 
   function renderWeatherPayload(payload, fallbackCity) {
     if (!weatherContentEl || !payload) return;
+    lastWeatherPayload = payload;
+    const weatherCode = Number(payload.weatherCode);
+    const condition = Number.isFinite(weatherCode)
+      ? weatherCodeToText(weatherCode, getCurrentLanguage())
+      : weatherCodeToText(0, getCurrentLanguage());
 
     applyWeatherVisualState(weatherContentEl, {
       conditionGroup: payload.conditionGroup,
@@ -128,11 +168,14 @@ export function initWidgets({
     });
 
     if (weatherCityInputEl) {
-      const cityAndCountry = [payload.placeName, payload.placeCountry].filter(Boolean).join(", ");
+      const localizedCountry = resolveLocalizedCountryName(payload.countryCode || "", payload.placeCountry || "");
+      const cityAndCountry = [payload.placeName, localizedCountry].filter(Boolean).join(", ");
       weatherCityInputEl.value = cityAndCountry || payload.placeName || fallbackCity;
-      lastWeatherQueryKey = normalizeCityQuery(weatherCityInputEl.value);
+      weatherCityInputEl.dataset.queryCity = fallbackCity || payload.placeName || "";
+      weatherCityInputEl.dataset.displayCity = cityAndCountry || payload.placeName || "";
+      lastWeatherQueryKey = normalizeCityQuery(fallbackCity || payload.placeName || "");
     }
-    lastWeatherCity = payload.placeName || fallbackCity;
+    lastWeatherCity = fallbackCity || payload.placeName || lastWeatherCity;
 
     weatherContentEl.innerHTML = `
       <div class="weather-hero">
@@ -141,13 +184,13 @@ export function initWidgets({
           <span class="weather-icon" aria-hidden="true">${payload.icon}</span>
         </div>
         <div class="weather-hero-right">
-          <div class="weather-desc">${payload.condition}</div>
-          <div class="weather-feels">Ощущается как ${payload.feelsLike}°</div>
+          <div class="weather-desc">${condition}</div>
+          <div class="weather-feels">${t("widgets.feelsLike", { value: payload.feelsLike })}</div>
         </div>
       </div>
-      <div class="weather-stats" aria-label="Дополнительные показатели">
-        <span class="weather-chip">Ветер ${payload.wind} м/с</span>
-        <span class="weather-chip">Влажность ${payload.humidity}%</span>
+      <div class="weather-stats" aria-label="${t("widgets.statsAria")}">
+        <span class="weather-chip">${t("widgets.wind", { value: payload.wind })}</span>
+        <span class="weather-chip">${t("widgets.humidity", { value: payload.humidity })}</span>
       </div>
     `;
   }
@@ -159,7 +202,7 @@ export function initWidgets({
       renderCurrencyPayload(cached);
       return;
     }
-    currencyContentEl.textContent = "Загружаю курсы...";
+    currencyContentEl.textContent = t("widgets.loadingCurrency");
 
     try {
       const resp = await fetch("https://www.cbr-xml-daily.ru/daily_json.js");
@@ -180,12 +223,13 @@ export function initWidgets({
       writeCachedValue(CURRENCY_CACHE_KEY, payload);
     } catch (error) {
       reportError("Currency widget request failed", error);
-      currencyContentEl.textContent = "Курсы временно недоступны";
+      currencyContentEl.textContent = t("widgets.currencyUnavailable");
     }
   }
 
   function renderCurrencyPayload(payload) {
     if (!currencyContentEl || !payload) return;
+    lastCurrencyPayload = payload;
     const refreshedAt = formatTime24(payload.refreshedAt);
     currencyContentEl.innerHTML = `
       <div class="currency-grid">
@@ -193,21 +237,31 @@ export function initWidgets({
         ${renderCurrencyRow("֏", payload.amd)}
         ${renderCurrencyRow("₸", payload.kzt)}
       </div>
-      <span class="sub">Обновлено в ${refreshedAt}</span>
+      <span class="sub">${t("widgets.updatedAt", { time: refreshedAt })}</span>
     `;
   }
 
-  async function loadIpInfo() {
+  async function loadIpInfo({ force = false } = {}) {
     if (!ipContentEl) return;
-    ipContentEl.textContent = "Loading IP…";
+    ipContentEl.textContent = t("widgets.loadingIp");
 
     try {
       const data = await fetchIpData();
+      const localizedCity = await localizeCityName({
+        city: data.city || "",
+        countryCode: data.countryCode || "",
+        latitude: data.latitude,
+        longitude: data.longitude,
+      });
       const payload = {
-        ip: data.ip || "Unknown",
+        ip: data.ip || t("widgets.unknownIp"),
+        rawCountry: data.country || "",
         countryCode: data.countryCode || "",
         country: resolveCountryName(data.country, data.countryCode || ""),
-        city: data.city || "",
+        rawCity: data.city || "",
+        city: localizedCity || data.city || "",
+        latitude: data.latitude,
+        longitude: data.longitude,
       };
       renderIpPayload(payload);
       writeCachedValue(IP_CACHE_KEY, payload);
@@ -215,58 +269,197 @@ export function initWidgets({
       reportError("IP widget request failed", error);
       const cached = readCachedValue(IP_CACHE_KEY, IP_CACHE_TTL_MS);
       if (cached) {
-        renderIpPayload(cached);
+        const localizedCachedCity = await localizeCityName({
+          city: cached.rawCity || cached.city || "",
+          countryCode: cached.countryCode || "",
+          latitude: cached.latitude,
+          longitude: cached.longitude,
+        });
+        renderIpPayload({
+          ...cached,
+          country: resolveCountryName(cached.rawCountry || cached.country || "", cached.countryCode || ""),
+          city: localizedCachedCity || cached.city || "",
+        });
         return;
       }
-      ipContentEl.textContent = "Данные IP недоступны";
+      ipContentEl.textContent = t("widgets.ipUnavailable");
     }
   }
 
   function renderIpPayload(payload) {
     if (!ipContentEl || !payload) return;
+    lastIpPayload = payload;
     const flagMarkup = renderCountryFlagMarkup(payload.countryCode);
     ipContentEl.innerHTML = `
       <div class="ip-content-premium">
-        <div class="ip-value">${escapeHtml(payload.ip || "Unknown")}</div>
+        <div class="ip-value">${escapeHtml(payload.ip || t("widgets.unknownIp"))}</div>
         <div class="ip-meta">
           <span class="ip-flag">${flagMarkup}</span>
-          <span>${escapeHtml(payload.country || "Unknown country")}</span>
+          <span>${escapeHtml(payload.country || t("widgets.unknownCountry"))}</span>
         </div>
-        <div class="ip-city">${payload.city ? escapeHtml(payload.city) : "Location unavailable"}</div>
+        <div class="ip-city">${payload.city ? escapeHtml(payload.city) : t("widgets.locationUnavailable")}</div>
       </div>
     `;
   }
 
   function submitWeatherFromInput({ restoreOnEmpty }) {
     if (!weatherCityInputEl) return;
-    const city = weatherCityInputEl.value.trim();
+    const typedCity = weatherCityInputEl.value.trim();
+    const displayCity = String(weatherCityInputEl.dataset.displayCity || "").trim();
+    const queryCity = String(weatherCityInputEl.dataset.queryCity || "").trim();
+    const city =
+      queryCity && normalizeCityQuery(typedCity) === normalizeCityQuery(displayCity || queryCity)
+        ? queryCity
+        : typedCity;
     const cityQueryKey = normalizeCityQuery(city);
 
     if (!city) {
       if (!restoreOnEmpty) return;
       const fallbackCity = localStorage.getItem(WEATHER_CITY_KEY) || lastWeatherCity || savedCity;
       if (!fallbackCity) return;
-      const fallbackQueryKey = normalizeCityQuery(fallbackCity);
+      const fallbackQuery = sanitizeWeatherCityQuery(fallbackCity) || fallbackCity;
+      const fallbackQueryKey = normalizeCityQuery(fallbackQuery);
       if (fallbackQueryKey && fallbackQueryKey === lastWeatherQueryKey) return;
       lastWeatherQueryKey = fallbackQueryKey;
-      void loadWeather(fallbackCity);
+      void loadWeather(fallbackQuery);
       return;
     }
 
     if (cityQueryKey && cityQueryKey === lastWeatherQueryKey) return;
 
-    localStorage.setItem(WEATHER_CITY_KEY, city);
-    lastWeatherCity = city;
-    lastWeatherQueryKey = cityQueryKey;
-    void loadWeather(city);
+    const canonicalCity = sanitizeWeatherCityQuery(city) || city;
+    localStorage.setItem(WEATHER_CITY_KEY, canonicalCity);
+    lastWeatherCity = canonicalCity;
+    lastWeatherQueryKey = normalizeCityQuery(canonicalCity);
+    void loadWeather(canonicalCity);
   }
 
   function loadWidgetsData() {
     if (widgetsDataLoaded) return;
     widgetsDataLoaded = true;
-    void loadWeather(savedCity);
+    void loadWeather(savedCity, { force: false });
     void loadCurrency();
-    void loadIpInfo();
+    void loadIpInfo({ force: false });
+  }
+
+  async function localizeCityName({ city, countryCode, latitude, longitude } = {}) {
+    const rawCity = String(city || "").trim();
+    if (!rawCity) return "";
+    const lang = getCurrentLanguage();
+    const lat = Number(latitude);
+    const lon = Number(longitude);
+    const hasCoords = Number.isFinite(lat) && Number.isFinite(lon);
+
+    const cacheKey = `${lang}:${String(countryCode || "").toUpperCase()}:${rawCity.toLowerCase()}:${hasCoords ? `${lat.toFixed(3)},${lon.toFixed(3)}` : "nocoords"}`;
+    if (localizedCityCache.has(cacheKey)) {
+      return localizedCityCache.get(cacheKey);
+    }
+
+    if (hasCoords) {
+      try {
+        const reverseNominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=10&namedetails=1&accept-language=${encodeURIComponent(lang)}&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`;
+        const reverseNominatimData = await fetchJsonWithTimeout(reverseNominatimUrl, 4500);
+        const namedetails = reverseNominatimData?.namedetails || {};
+        const preferredNamed =
+          (lang === "en" ? namedetails["name:en"] : namedetails["name:ru"]) ||
+          namedetails.name ||
+          "";
+        const reverseAddress = reverseNominatimData?.address || {};
+        const reverseLocalized =
+          preferredNamed ||
+          reverseAddress.city ||
+          reverseAddress.town ||
+          reverseAddress.village ||
+          reverseAddress.municipality ||
+          reverseAddress.county ||
+          "";
+        const reverseLocalizedCity = String(reverseLocalized || "").trim();
+        if (reverseLocalizedCity) {
+          localizedCityCache.set(cacheKey, reverseLocalizedCity);
+          return reverseLocalizedCity;
+        }
+      } catch {
+        // continue
+      }
+
+      try {
+        const reverseUrl = `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&language=${encodeURIComponent(lang)}`;
+        const reverseData = await fetchJsonWithTimeout(reverseUrl, 4500);
+        const reverseHit = Array.isArray(reverseData?.results) ? reverseData.results[0] : null;
+        const reverseName = String(reverseHit?.name || "").trim();
+        if (reverseName) {
+          localizedCityCache.set(cacheKey, reverseName);
+          return reverseName;
+        }
+      } catch {
+        // fallback below
+      }
+    }
+
+    try {
+      const query = [rawCity, countryCode].filter(Boolean).join(", ");
+      const langFallback = lang === "ru" ? "en" : "ru";
+      const primary = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=${encodeURIComponent(lang)}&format=json`;
+      const fallback = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=${encodeURIComponent(langFallback)}&format=json`;
+
+      const openMeteoSources = [primary, fallback];
+      for (const url of openMeteoSources) {
+        try {
+          const data = await fetchJsonWithTimeout(url, 4500);
+          const hit = Array.isArray(data?.results) ? data.results[0] : null;
+          const localized = String(hit?.name || "").trim();
+          if (localized) {
+            localizedCityCache.set(cacheKey, localized);
+            return localized;
+          }
+        } catch {
+          // continue
+        }
+      }
+
+      const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&accept-language=${encodeURIComponent(lang)}&q=${encodeURIComponent(query)}`;
+      const nominatimData = await fetchJsonWithTimeout(nominatimUrl, 4500);
+      const nominatimHit = Array.isArray(nominatimData) ? nominatimData[0] : null;
+      const address = nominatimHit?.address || {};
+      const cityFromAddress =
+        address.city ||
+        address.town ||
+        address.village ||
+        address.municipality ||
+        address.county ||
+        "";
+
+      const finalCity = String(cityFromAddress || "").trim() || rawCity;
+      localizedCityCache.set(cacheKey, finalCity);
+      return finalCity;
+    } catch {
+      localizedCityCache.set(cacheKey, rawCity);
+      return rawCity;
+    }
+  }
+
+  async function refreshWeatherLocationLabel() {
+    if (!weatherCityInputEl || !lastWeatherPayload) return;
+    const lat = Number(lastWeatherPayload.latitude);
+    const lon = Number(lastWeatherPayload.longitude);
+
+    let city = String(lastWeatherPayload.placeName || "").trim();
+    let countryCode = String(lastWeatherPayload.countryCode || "").trim().toUpperCase();
+
+    const localizedCity = await localizeCityName({
+      city,
+      countryCode,
+      latitude: Number.isFinite(lat) ? lat : undefined,
+      longitude: Number.isFinite(lon) ? lon : undefined,
+    });
+    city = String(localizedCity || city).trim() || city;
+
+    const localizedCountry = resolveLocalizedCountryName(countryCode, lastWeatherPayload.placeCountry || "");
+    const cityAndCountry = [city, localizedCountry].filter(Boolean).join(", ");
+    if (cityAndCountry) {
+      weatherCityInputEl.value = cityAndCountry;
+      weatherCityInputEl.dataset.displayCity = cityAndCountry;
+    }
   }
 
   function initWidgetsReorder() {
@@ -583,23 +776,44 @@ function normalizeCityQuery(value) {
     .replace(/\s+/g, " ");
 }
 
+function sanitizeWeatherCityQuery(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  const [cityPart] = raw.split(",");
+  return String(cityPart || raw).trim();
+}
+
 async function geocodeCity(city) {
-  const openMeteoRu = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=ru&format=json`;
-  const openMeteoEn = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`;
+  const primaryLang = getCurrentLanguage();
+  const fallbackLang = primaryLang === "ru" ? "en" : "ru";
+  const openMeteoPrimary = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=${encodeURIComponent(primaryLang)}&format=json`;
+  const openMeteoFallback = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=${encodeURIComponent(fallbackLang)}&format=json`;
   const nominatim = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(city)}`;
 
   const probes = [
     async () => {
-      const data = await fetchJsonWithTimeout(openMeteoRu);
+      const data = await fetchJsonWithTimeout(openMeteoPrimary);
       const item = Array.isArray(data?.results) ? data.results[0] : null;
       if (!item) return null;
-      return { latitude: item.latitude, longitude: item.longitude, name: item.name || city, country: item.country || "" };
+      return {
+        latitude: item.latitude,
+        longitude: item.longitude,
+        name: item.name || city,
+        country: item.country || "",
+        countryCode: String(item.country_code || "").toUpperCase(),
+      };
     },
     async () => {
-      const data = await fetchJsonWithTimeout(openMeteoEn);
+      const data = await fetchJsonWithTimeout(openMeteoFallback);
       const item = Array.isArray(data?.results) ? data.results[0] : null;
       if (!item) return null;
-      return { latitude: item.latitude, longitude: item.longitude, name: item.name || city, country: item.country || "" };
+      return {
+        latitude: item.latitude,
+        longitude: item.longitude,
+        name: item.name || city,
+        country: item.country || "",
+        countryCode: String(item.country_code || "").toUpperCase(),
+      };
     },
     async () => {
       const data = await fetchJsonWithTimeout(nominatim);
@@ -612,6 +826,7 @@ async function geocodeCity(city) {
         longitude: Number(item.lon),
         name: name || city,
         country,
+        countryCode: String(item?.address?.country_code || "").toUpperCase(),
       };
     },
   ];
@@ -653,6 +868,8 @@ async function fetchIpData() {
         country: data?.country_name || data?.country || "",
         countryCode: String(data?.country_code || data?.country || "").toUpperCase(),
         city: data?.city || "",
+        latitude: typeof data?.latitude === "number" ? data.latitude : Number(data?.latitude),
+        longitude: typeof data?.longitude === "number" ? data.longitude : Number(data?.longitude),
       };
     },
     async () => {
@@ -663,15 +880,23 @@ async function fetchIpData() {
         country: data?.country || "",
         countryCode: String(data?.country_code || "").toUpperCase(),
         city: data?.city || "",
+        latitude: typeof data?.latitude === "number" ? data.latitude : Number(data?.latitude),
+        longitude: typeof data?.longitude === "number" ? data.longitude : Number(data?.longitude),
       };
     },
     async () => {
       const data = await fetchJsonWithTimeout("https://ipinfo.io/json");
+      const loc = String(data?.loc || "");
+      const [latRaw, lonRaw] = loc.split(",");
+      const latitude = Number(latRaw);
+      const longitude = Number(lonRaw);
       return {
         ip: data?.ip || "",
         country: "",
         countryCode: String(data?.country || "").toUpperCase(),
         city: data?.city || "",
+        latitude: Number.isFinite(latitude) ? latitude : undefined,
+        longitude: Number.isFinite(longitude) ? longitude : undefined,
       };
     },
     async () => {
@@ -704,8 +929,8 @@ async function fetchJsonWithTimeout(url, timeoutMs = 5000) {
   }
 }
 
-function weatherCodeToText(code) {
-  const map = new Map([
+function weatherCodeToText(code, language = "ru") {
+  const ruMap = new Map([
     [0, "Ясно"],
     [1, "Преимущественно ясно"],
     [2, "Облачно с прояснениями"],
@@ -735,7 +960,39 @@ function weatherCodeToText(code) {
     [96, "Гроза"],
     [99, "Гроза"],
   ]);
-  return map.get(code) || "Неизвестно";
+  const enMap = new Map([
+    [0, "Clear sky"],
+    [1, "Mainly clear"],
+    [2, "Partly cloudy"],
+    [3, "Overcast"],
+    [45, "Fog"],
+    [48, "Fog"],
+    [51, "Light drizzle"],
+    [53, "Drizzle"],
+    [55, "Heavy drizzle"],
+    [56, "Freezing drizzle"],
+    [57, "Freezing drizzle"],
+    [61, "Light rain"],
+    [63, "Rain"],
+    [65, "Heavy rain"],
+    [66, "Freezing rain"],
+    [67, "Freezing rain"],
+    [71, "Light snow"],
+    [73, "Snow"],
+    [75, "Heavy snow"],
+    [77, "Snow grains"],
+    [80, "Showers"],
+    [81, "Showers"],
+    [82, "Heavy showers"],
+    [85, "Snow showers"],
+    [86, "Heavy snow showers"],
+    [95, "Thunderstorm"],
+    [96, "Thunderstorm"],
+    [99, "Thunderstorm"],
+  ]);
+
+  const map = language === "en" ? enMap : ruMap;
+  return map.get(code) || (language === "en" ? "Unknown" : "Неизвестно");
 }
 
 function weatherCodeToGroup(code) {
@@ -810,16 +1067,24 @@ function renderCountryFlagMarkup(code) {
 function resolveCountryName(country, countryCode) {
   const raw = String(country || "").trim();
   const code = String(countryCode || "").trim().toUpperCase();
+  return resolveLocalizedCountryName(code || raw, raw);
+}
 
-  if (raw && raw.length > 2) return raw;
-  const alpha2 = /^[A-Z]{2}$/.test(code) ? code : /^[A-Z]{2}$/.test(raw.toUpperCase()) ? raw.toUpperCase() : "";
-  if (!alpha2) return raw || "Unknown country";
+function resolveLocalizedCountryName(countryCodeOrRaw, fallbackName = "") {
+  const raw = String(fallbackName || "").trim();
+  const codeRaw = String(countryCodeOrRaw || "").trim().toUpperCase();
+  const alpha2 = /^[A-Z]{2}$/.test(codeRaw)
+    ? codeRaw
+    : /^[A-Z]{2}$/.test(raw.toUpperCase())
+      ? raw.toUpperCase()
+      : "";
 
+  if (!alpha2) return raw || t("widgets.unknownCountry");
   try {
-    const names = new Intl.DisplayNames(["en"], { type: "region" });
-    return names.of(alpha2) || raw || "Unknown country";
+    const names = new Intl.DisplayNames([getCurrentLanguage()], { type: "region" });
+    return names.of(alpha2) || raw || alpha2 || t("widgets.unknownCountry");
   } catch {
-    return raw || alpha2;
+    return raw || alpha2 || t("widgets.unknownCountry");
   }
 }
 
@@ -892,7 +1157,8 @@ function writeCachedValue(key, data) {
 
 function formatTime24(value) {
   const date = new Date(value || Date.now());
-  return date.toLocaleTimeString("ru-RU", {
+  const locale = getCurrentLanguage() === "en" ? "en-GB" : "ru-RU";
+  return date.toLocaleTimeString(locale, {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,

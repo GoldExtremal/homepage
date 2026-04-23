@@ -1,4 +1,5 @@
 import { SEARCH_HISTORY_KEY, SEARCH_HISTORY_LIMIT, SUGGEST_ENDPOINT } from "../config/constants.js";
+import { getCurrentLanguage } from "../i18n.js";
 import { reportError } from "../utils/log.js";
 import { looksLikeUrl, normalizeUrl } from "../utils/url.js";
 
@@ -203,7 +204,7 @@ export function initSearch({ formEl, inputEl, suggestionsEl }) {
 
   function fetchGoogleSuggestionsJsonp(query, requestId) {
     return new Promise((resolve, reject) => {
-      const lang = (navigator.language || "en").split("-")[0];
+      const lang = getCurrentLanguage();
       const callbackName = `__googleSuggest_${requestId}_${Date.now()}`;
       const script = document.createElement("script");
       const timeoutId = setTimeout(() => {

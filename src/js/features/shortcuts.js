@@ -1,4 +1,5 @@
 import { DEFAULT_SHORTCUTS, MAX_SHORTCUTS, SHORTCUTS_STORAGE_KEY } from "../config/constants.js";
+import { LANGUAGE_CHANGE_EVENT, t } from "../i18n.js";
 import {
   extractRootDomain,
   isValidUrl,
@@ -57,13 +58,13 @@ export function initShortcuts({
     const icon = normalizeOptionalUrl(iconInputEl.value);
 
     if (!name || !isValidUrl(url)) {
-      urlInputEl.setCustomValidity("Enter a valid URL");
+      urlInputEl.setCustomValidity(t("shortcuts.invalidUrl"));
       urlInputEl.reportValidity();
       return;
     }
 
     if (iconInputEl.value.trim() && !isValidUrl(icon)) {
-      iconInputEl.setCustomValidity("Enter a valid icon URL");
+      iconInputEl.setCustomValidity(t("shortcuts.invalidIconUrl"));
       iconInputEl.reportValidity();
       return;
     }
@@ -92,6 +93,13 @@ export function initShortcuts({
     resetDialog();
   });
 
+  window.addEventListener(LANGUAGE_CHANGE_EVENT, () => {
+    renderShortcuts();
+    if (dialogEl.open) {
+      dialogTitleEl.textContent = editingIndex >= 0 ? t("dialog.editShortcut") : t("dialog.addShortcut");
+    }
+  });
+
   function renderShortcuts() {
     listEl.innerHTML = "";
 
@@ -104,9 +112,13 @@ export function initShortcuts({
       const menuBtn = fragment.querySelector(".shortcut-menu-btn");
       const editBtn = fragment.querySelector(".shortcut-action-edit");
       const removeBtn = fragment.querySelector(".shortcut-action-remove");
+      editBtn.textContent = t("dialog.edit");
+      removeBtn.textContent = t("dialog.remove");
 
       tile.dataset.index = String(index);
       link.setAttribute("draggable", "false");
+      link.title = t("shortcuts.open");
+      menuBtn.setAttribute("aria-label", t("shortcuts.moreActions"));
 
       link.href = item.url;
       label.textContent = item.name;
@@ -141,25 +153,25 @@ export function initShortcuts({
       const addItem = document.createElement("li");
       addItem.className = "shortcut-item shortcut-item-add";
       addItem.innerHTML = `
-        <button class="shortcut-link" type="button" aria-label="Add shortcut">
+        <button class="shortcut-link" type="button" aria-label="${t("shortcuts.addAria")}">
           <span class="shortcut-icon">+</span>
-          <span class="shortcut-label">Add shortcut</span>
+          <span class="shortcut-label">${t("shortcuts.add")}</span>
         </button>
       `;
 
       addItem.querySelector("button").addEventListener("click", () => {
         closeAllMenus();
         if (typeof dialogEl.showModal === "function") {
-          dialogTitleEl.textContent = "Add shortcut";
+          dialogTitleEl.textContent = t("dialog.addShortcut");
           editingIndex = -1;
           dialogEl.showModal();
           nameInputEl.focus();
           return;
         }
 
-        const name = prompt("Shortcut name:");
+        const name = prompt(t("shortcuts.editPromptName"));
         if (!name) return;
-        const raw = prompt("Shortcut URL:");
+        const raw = prompt(t("shortcuts.editPromptUrl"));
         if (!raw) return;
 
         const url = normalizeUrl(raw);
@@ -324,7 +336,7 @@ export function initShortcuts({
 
   function openEditDialog(item, index) {
     editingIndex = index;
-    dialogTitleEl.textContent = "Edit shortcut";
+    dialogTitleEl.textContent = t("dialog.editShortcut");
     nameInputEl.value = item.name;
     urlInputEl.value = item.url;
     iconInputEl.value = item.icon || "";
@@ -336,9 +348,9 @@ export function initShortcuts({
       return;
     }
 
-    const nextName = prompt("Shortcut name:", item.name);
+    const nextName = prompt(t("shortcuts.editPromptName"), item.name);
     if (!nextName) return;
-    const nextUrlRaw = prompt("Shortcut URL:", item.url);
+    const nextUrlRaw = prompt(t("shortcuts.editPromptUrl"), item.url);
     if (!nextUrlRaw) return;
     const nextUrl = normalizeUrl(nextUrlRaw);
     if (!isValidUrl(nextUrl)) return;
@@ -503,7 +515,7 @@ export function initShortcuts({
 
   function resetDialog() {
     editingIndex = -1;
-    dialogTitleEl.textContent = "Add shortcut";
+    dialogTitleEl.textContent = t("dialog.addShortcut");
     formEl.reset();
     urlInputEl.setCustomValidity("");
     iconInputEl.setCustomValidity("");
