@@ -47,9 +47,10 @@
 
 Готово: теперь новая вкладка в Chrome должна открывать эту домашнюю страницу.
 
-<p align="center">
+![Настройка расширения New Tab Redirect](./assets/extentions2.png)
+<!-- <p align="center">
   <img src="./assets/extentions2.png" alt="Настройка расширения New Tab Redirect" width="155" />
-</p>
+</p> -->
 
 ## Локальный запуск
 
