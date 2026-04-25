@@ -41,16 +41,14 @@
 8. Откройте новую вкладку (`Ctrl + T`), чтобы проверить результат.
 9. Если открылась не наша страница:
    - откройте настройки расширения `New Tab Redirect`;
+
+![Настройка расширения New Tab Redirect](./assets/extentions2.png)
+
    - вставьте туда адрес `https://goldextremal.github.io/homepage/`;
    - нажмите `Save`;
    - снова откройте новую вкладку (`Ctrl + T`).
 
 Готово: теперь новая вкладка в Chrome должна открывать эту домашнюю страницу.
-
-![Настройка расширения New Tab Redirect](./assets/extentions2.png)
-<!-- <p align="center">
-  <img src="./assets/extentions2.png" alt="Настройка расширения New Tab Redirect" width="155" />
-</p> -->
 
 ## Локальный запуск
 
