@@ -26,18 +26,29 @@
 
 ## Настройка в Chrome
 
-1. Откройте `chrome://settings/appearance` и включите `Show home button` (Показать кнопку «Главная»).
-2. В поле для домашней страницы укажите:
+Ниже очень простой вариант, шаг за шагом.
+
+1. Откройте Chrome.
+2. Скопируйте и вставьте в адресную строку:
+   `chrome://settings/appearance`
+3. Нажмите `Enter`.
+4. Найдите пункт `Show home button` (или «Показывать кнопку "Главная"») и включите его.
+5. В поле для адреса домашней страницы вставьте:
    `https://goldextremal.github.io/homepage/`
-3. Установите расширение New Tab Redirect:
+6. Теперь установите расширение `New Tab Redirect`. Для этого откройте ссылку:
    `https://chromewebstore.google.com/detail/new-tab-redirect/icpgjfneehieebagbmdbhnlpiopdcmna`
-4. Если новая вкладка не переадресуется автоматически:
-   - откройте настройки расширения,
-   - вставьте `https://goldextremal.github.io/homepage/`,
-   - нажмите `Save`.
+7. Нажмите кнопку установки (`Add to Chrome` / «Установить» / «Добавить в Chrome»).
+8. Откройте новую вкладку (`Ctrl + T`), чтобы проверить результат.
+9. Если открылась не наша страница:
+   - откройте настройки расширения `New Tab Redirect`;
+   - вставьте туда адрес `https://goldextremal.github.io/homepage/`;
+   - нажмите `Save`;
+   - снова откройте новую вкладку (`Ctrl + T`).
+
+Готово: теперь новая вкладка в Chrome должна открывать эту домашнюю страницу.
 
 <p align="center">
-  <img src="./assets/extentions.png" alt="Настройка расширения New Tab Redirect" width="155" />
+  <img src="./assets/extentions2.png" alt="Настройка расширения New Tab Redirect" width="155" />
 </p>
 
 ## Локальный запуск
@@ -66,7 +77,7 @@ python3 -m http.server 8080
 .
 ├── assets/
 │   ├── preview.png
-│   ├── extentions.png
+│   ├── extentions2.png
 │   ├── templates/
 │   │   ├── full/
 │   │   └── thumb/
