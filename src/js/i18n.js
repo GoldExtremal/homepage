@@ -71,6 +71,11 @@ const DICTIONARY = {
       name: "Название",
       url: "URL",
       iconOptional: "URL иконки (опционально)",
+      consentPrefix: "Я даю согласие на обработку персональных данных и принимаю",
+      privacyLink: "Политику конфиденциальности",
+      cookiesLink: "условия cookies/localStorage",
+      and: "и",
+      agreementLink: "Пользовательское соглашение",
       cancel: "Отмена",
       done: "Готово",
       remove: "Удалить",
@@ -113,6 +118,7 @@ const DICTIONARY = {
     legal: {
       privacy: "Политика конфиденциальности",
       cookies: "Cookies и localStorage",
+      agreement: "Пользовательское соглашение",
     },
     banner: {
       part1: "Сайт использует localStorage, кеш браузера и может обращаться к внешним сервисам для работы поиска, погоды, валют и IP-виджета.",
@@ -199,6 +205,11 @@ const DICTIONARY = {
       name: "Name",
       url: "URL",
       iconOptional: "Icon URL (optional)",
+      consentPrefix: "I consent to personal data processing and accept the",
+      privacyLink: "Privacy Policy",
+      cookiesLink: "cookies/localStorage terms",
+      and: "and",
+      agreementLink: "User Agreement",
       cancel: "Cancel",
       done: "Done",
       remove: "Remove",
@@ -241,6 +252,7 @@ const DICTIONARY = {
     legal: {
       privacy: "Privacy Policy",
       cookies: "Cookies & localStorage",
+      agreement: "User Agreement",
     },
     banner: {
       part1: "This site uses localStorage, browser cache, and may access external services for search, weather, currency, and IP widgets.",

@@ -421,6 +421,18 @@ html[lang="ru"] .privacy-menu h3 {
   background: rgba(147, 176, 234, 0.11);
 }
 
+.privacy-menu .settings-legal-link:first-of-type {
+  margin-top: auto;
+}
+
+.privacy-menu .settings-legal-link:hover {
+  background: transparent;
+}
+
+html.theme-light .privacy-menu .settings-legal-link:hover {
+  background: transparent;
+}
+
 .language-toggle {
   position: relative;
   width: 48px;

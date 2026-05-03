@@ -23,6 +23,7 @@ export function initShortcuts({
   nameInputEl,
   urlInputEl,
   iconInputEl,
+  consentInputEl,
   cancelBtnEl,
 }) {
   let shortcuts = readShortcuts();
@@ -56,6 +57,11 @@ export function initShortcuts({
     const name = nameInputEl.value.trim();
     const url = normalizeUrl(urlInputEl.value);
     const icon = normalizeOptionalUrl(iconInputEl.value);
+
+    if (consentInputEl && !consentInputEl.checked) {
+      consentInputEl.reportValidity();
+      return;
+    }
 
     if (!name || !isValidUrl(url)) {
       urlInputEl.setCustomValidity(t("shortcuts.invalidUrl"));

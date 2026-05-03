@@ -83,6 +83,7 @@ const shortcuts = initShortcuts({
   nameInputEl: document.getElementById("shortcutName"),
   urlInputEl: document.getElementById("shortcutUrl"),
   iconInputEl: document.getElementById("shortcutIcon"),
+  consentInputEl: document.getElementById("shortcutConsent"),
   cancelBtnEl: document.getElementById("cancelDialog"),
 });
 
