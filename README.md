@@ -44,7 +44,7 @@
 9. Если открылась не наша страница:
    - откройте настройки расширения `New Tab Redirect`;
 
-![Настройка расширения New Tab Redirect](./assets/extentions2.png)
+![Настройка расширения New Tab Redirect](./assets/extentions.png)
 
    - вставьте туда адрес `https://goldextremal.github.io/homepage/`;
    - нажмите `Save`;
