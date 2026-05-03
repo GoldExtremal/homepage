@@ -2,12 +2,17 @@ import {
   BACKGROUND_IMAGE_KEY,
   BACKGROUND_TEMPLATE_KEY,
   PAGE_SETTINGS_KEY,
-  RESETTABLE_STORAGE_KEYS,
   SEARCH_HISTORY_KEY,
   SHORTCUTS_STORAGE_KEY,
   WEATHER_CITY_KEY,
   WIDGETS_ORDER_KEY,
 } from "../config/constants.js";
+import {
+  clearSiteLocalData,
+  PRIVACY_SETTINGS_EVENT,
+  readPrivacySettings,
+  writePrivacySettings,
+} from "./privacy.js";
 import {
   DEFAULT_LANGUAGE,
   LANGUAGE_CHANGE_EVENT,
@@ -38,11 +43,13 @@ const TEMPLATE_BACKGROUNDS = [
 
 const WIDGETS_VISIBILITY_EVENT = "page-settings:widgets-visibility";
 const LIGHT_SHORTCUTS_TEMPLATE_IDS = new Set(["anime-neon"]);
+const DARK_LEGAL_TEXT_TEMPLATE_IDS = new Set(["grass", "city-wallpaper"]);
 
 export function initPageSettings({
   settingsWrapEl,
   settingsMenuEl,
   templatesMenuEl,
+  privacyMenuEl,
   settingsToggleEl,
   shortcutsEl,
   widgetsPanelEl,
@@ -57,10 +64,16 @@ export function initPageSettings({
   resetShortcutsBtnEl,
   clearWidgetsDataBtnEl,
   resetUserDataBtnEl,
+  openPrivacyMenuBtnEl,
+  privacyBackBtnEl,
+  privacySearchSuggestToggleEl,
+  privacyWeatherToggleEl,
+  privacyCurrencyToggleEl,
+  privacyIpToggleEl,
   templatesBackBtnEl,
   templatesGridEl,
 }) {
-  if (!settingsWrapEl || !settingsMenuEl || !templatesMenuEl || !settingsToggleEl || !shortcutsToggleEl || !widgetsToggleEl || !darkModeToggleEl) {
+  if (!settingsWrapEl || !settingsMenuEl || !templatesMenuEl || !privacyMenuEl || !settingsToggleEl || !shortcutsToggleEl || !widgetsToggleEl || !darkModeToggleEl) {
     return {
       closeSettingsMenu() {},
       containsTarget() {
@@ -70,16 +83,28 @@ export function initPageSettings({
   }
 
   let settings = readSettings();
+  let privacySettings = readPrivacySettings();
   let templateGridRendered = false;
   applyLanguage(settings.language, { emit: false });
   applyStoredBackground();
   applySettings(settings);
   emitWidgetsVisibility(settings.showWidgets);
   syncControls(settings);
+  syncPrivacyControls(privacySettings);
+
+  window.addEventListener(PRIVACY_SETTINGS_EVENT, (event) => {
+    const next = event instanceof CustomEvent ? event.detail?.settings : null;
+    if (!next || typeof next !== "object") return;
+    privacySettings = {
+      ...privacySettings,
+      ...next,
+    };
+    syncPrivacyControls(privacySettings);
+  });
 
   settingsToggleEl.addEventListener("click", (event) => {
     event.stopPropagation();
-    if (templatesMenuEl.classList.contains("open")) {
+    if (templatesMenuEl.classList.contains("open") || privacyMenuEl.classList.contains("open")) {
       openSettingsMenu();
       return;
     }
@@ -127,11 +152,39 @@ export function initPageSettings({
     persistSettings(settings);
   });
 
-  resetUserDataBtnEl?.addEventListener("click", () => {
+  resetUserDataBtnEl?.addEventListener("click", async () => {
     const isConfirmed = window.confirm(t("confirm.resetUserData"));
     if (!isConfirmed) return;
-    RESETTABLE_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
+    await clearSiteLocalData();
     window.location.reload();
+  });
+
+  privacySearchSuggestToggleEl?.addEventListener("change", () => {
+    privacySettings = writePrivacySettings({
+      ...privacySettings,
+      searchSuggest: Boolean(privacySearchSuggestToggleEl.checked),
+    });
+  });
+
+  privacyWeatherToggleEl?.addEventListener("change", () => {
+    privacySettings = writePrivacySettings({
+      ...privacySettings,
+      weather: Boolean(privacyWeatherToggleEl.checked),
+    });
+  });
+
+  privacyCurrencyToggleEl?.addEventListener("change", () => {
+    privacySettings = writePrivacySettings({
+      ...privacySettings,
+      currency: Boolean(privacyCurrencyToggleEl.checked),
+    });
+  });
+
+  privacyIpToggleEl?.addEventListener("change", () => {
+    privacySettings = writePrivacySettings({
+      ...privacySettings,
+      ipWidget: Boolean(privacyIpToggleEl.checked),
+    });
   });
 
   clearSearchHistoryBtnEl?.addEventListener("click", () => {
@@ -149,7 +202,15 @@ export function initPageSettings({
     openTemplatesMenu();
   });
 
+  openPrivacyMenuBtnEl?.addEventListener("click", () => {
+    openPrivacyMenu();
+  });
+
   templatesBackBtnEl?.addEventListener("click", () => {
+    openSettingsMenu();
+  });
+
+  privacyBackBtnEl?.addEventListener("click", () => {
     openSettingsMenu();
   });
 
@@ -270,6 +331,13 @@ export function initPageSettings({
     }
   }
 
+  function syncPrivacyControls(nextPrivacySettings) {
+    if (privacySearchSuggestToggleEl) privacySearchSuggestToggleEl.checked = Boolean(nextPrivacySettings.searchSuggest);
+    if (privacyWeatherToggleEl) privacyWeatherToggleEl.checked = Boolean(nextPrivacySettings.weather);
+    if (privacyCurrencyToggleEl) privacyCurrencyToggleEl.checked = Boolean(nextPrivacySettings.currency);
+    if (privacyIpToggleEl) privacyIpToggleEl.checked = Boolean(nextPrivacySettings.ipWidget);
+  }
+
   function readSettings() {
     try {
       const raw = localStorage.getItem(PAGE_SETTINGS_KEY);
@@ -331,11 +399,14 @@ export function initPageSettings({
     document.documentElement.classList.remove("custom-bg");
     document.documentElement.style.removeProperty("--user-bg");
     document.documentElement.classList.remove("shortcuts-light-skin");
+    document.documentElement.classList.remove("legal-dark-text");
   }
 
   function applyTemplateShortcutStyle(templateId) {
     const shouldUseLightShortcuts = Boolean(templateId && LIGHT_SHORTCUTS_TEMPLATE_IDS.has(templateId));
     document.documentElement.classList.toggle("shortcuts-light-skin", shouldUseLightShortcuts);
+    const shouldUseDarkLegalText = Boolean(templateId && DARK_LEGAL_TEXT_TEMPLATE_IDS.has(templateId));
+    document.documentElement.classList.toggle("legal-dark-text", shouldUseDarkLegalText);
   }
 
   function inferTemplateIdFromBackground(backgroundValue) {
@@ -378,6 +449,7 @@ export function initPageSettings({
   function openSettingsMenu() {
     settingsMenuEl.classList.add("open");
     templatesMenuEl.classList.remove("open");
+    privacyMenuEl.classList.remove("open");
     settingsWrapEl.classList.add("open");
     settingsToggleEl.setAttribute("aria-expanded", "true");
   }
@@ -388,6 +460,15 @@ export function initPageSettings({
     }
     settingsMenuEl.classList.remove("open");
     templatesMenuEl.classList.add("open");
+    privacyMenuEl.classList.remove("open");
+    settingsWrapEl.classList.add("open");
+    settingsToggleEl.setAttribute("aria-expanded", "true");
+  }
+
+  function openPrivacyMenu() {
+    settingsMenuEl.classList.remove("open");
+    templatesMenuEl.classList.remove("open");
+    privacyMenuEl.classList.add("open");
     settingsWrapEl.classList.add("open");
     settingsToggleEl.setAttribute("aria-expanded", "true");
   }
@@ -396,6 +477,7 @@ export function initPageSettings({
     settingsWrapEl.classList.remove("open");
     settingsMenuEl.classList.remove("open");
     templatesMenuEl.classList.remove("open");
+    privacyMenuEl.classList.remove("open");
     settingsToggleEl.setAttribute("aria-expanded", "false");
   }
 
@@ -427,7 +509,7 @@ export function initPageSettings({
   return {
     closeSettingsMenu,
     containsTarget(target) {
-      return target instanceof Element && (Boolean(target.closest(".settings-wrap")) || Boolean(target.closest(".settings-menu")) || Boolean(target.closest(".templates-menu")));
+      return target instanceof Element && (Boolean(target.closest(".settings-wrap")) || Boolean(target.closest(".settings-menu")) || Boolean(target.closest(".templates-menu")) || Boolean(target.closest(".privacy-menu")));
     },
   };
 }

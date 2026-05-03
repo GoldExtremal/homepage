@@ -1,5 +1,6 @@
 import { SEARCH_HISTORY_KEY, SEARCH_HISTORY_LIMIT, SUGGEST_ENDPOINT } from "../config/constants.js";
 import { getCurrentLanguage } from "../i18n.js";
+import { isPrivacyFeatureEnabled, PRIVACY_SETTINGS_EVENT } from "./privacy.js";
 import { reportError } from "../utils/log.js";
 import { looksLikeUrl, normalizeUrl } from "../utils/url.js";
 
@@ -54,6 +55,12 @@ export function initSearch({ formEl, inputEl, suggestionsEl }) {
 
   inputEl.focus();
 
+  window.addEventListener(PRIVACY_SETTINGS_EVENT, () => {
+    if (!isPrivacyFeatureEnabled("searchSuggest")) {
+      hideSuggestions();
+    }
+  });
+
   function runSearch(valueOverride = "") {
     const value = activeSuggestionIndex >= 0 && activeSuggestionIndex < currentSuggestions.length
       ? currentSuggestions[activeSuggestionIndex]?.text || ""
@@ -85,6 +92,12 @@ export function initSearch({ formEl, inputEl, suggestionsEl }) {
   }
 
   async function fetchSuggestions(query) {
+    if (!isPrivacyFeatureEnabled("searchSuggest")) {
+      const historyItems = getHistoryMatches(query).map((text) => ({ text, source: "history" }));
+      renderSuggestions(historyItems);
+      return;
+    }
+
     const requestId = ++suggestRequestId;
     if (activeSuggestCleanup) {
       activeSuggestCleanup();

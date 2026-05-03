@@ -6,6 +6,8 @@ export const SUGGEST_ENDPOINT = "https://suggestqueries.google.com/complete/sear
 export const SEARCH_HISTORY_KEY = "chrome-clone-search-history-v1";
 export const SEARCH_HISTORY_LIMIT = 8;
 export const PAGE_SETTINGS_KEY = "chrome-clone-page-settings-v1";
+export const PRIVACY_SETTINGS_KEY = "chrome-clone-privacy-settings-v1";
+export const PRIVACY_CONSENT_KEY = "chrome-clone-privacy-consent-v1";
 export const BACKGROUND_IMAGE_KEY = "chrome-clone-background-image-v1";
 export const BACKGROUND_TEMPLATE_KEY = "chrome-clone-background-template-v1";
 export const WEATHER_CACHE_KEY = "chrome-clone-weather-cache-v2";
@@ -17,6 +19,8 @@ export const RESETTABLE_STORAGE_KEYS = [
   WIDGETS_ORDER_KEY,
   SEARCH_HISTORY_KEY,
   PAGE_SETTINGS_KEY,
+  PRIVACY_SETTINGS_KEY,
+  PRIVACY_CONSENT_KEY,
   BACKGROUND_IMAGE_KEY,
   BACKGROUND_TEMPLATE_KEY,
   WEATHER_CACHE_KEY,

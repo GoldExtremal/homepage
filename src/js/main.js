@@ -1,6 +1,7 @@
 import { initAppsMenu } from "./features/appsMenu.js";
 import { renderGoogleServicesMenu } from "./features/googleServicesMenu.js";
 import { initSearch } from "./features/search.js";
+import { initPrivacyBanner } from "./features/privacy.js";
 import { initPageSettings } from "./features/settings.js";
 import { initShortcuts } from "./features/shortcuts.js";
 import { initWidgets } from "./features/widgets.js";
@@ -29,6 +30,7 @@ const settings = initPageSettings({
   settingsWrapEl: document.querySelector(".settings-wrap"),
   settingsMenuEl: document.getElementById("settingsMenu"),
   templatesMenuEl: document.getElementById("templatesMenu"),
+  privacyMenuEl: document.getElementById("privacyMenu"),
   settingsToggleEl,
   shortcutsEl: document.getElementById("shortcutsList"),
   widgetsPanelEl: document.querySelector(".widgets-panel"),
@@ -43,6 +45,12 @@ const settings = initPageSettings({
   resetShortcutsBtnEl: document.getElementById("resetShortcutsBtn"),
   clearWidgetsDataBtnEl: document.getElementById("clearWidgetsDataBtn"),
   resetUserDataBtnEl: document.getElementById("resetUserDataBtn"),
+  openPrivacyMenuBtnEl: document.getElementById("openPrivacyMenuBtn"),
+  privacyBackBtnEl: document.getElementById("privacyBackBtn"),
+  privacySearchSuggestToggleEl: document.getElementById("togglePrivacySuggest"),
+  privacyWeatherToggleEl: document.getElementById("togglePrivacyWeather"),
+  privacyCurrencyToggleEl: document.getElementById("togglePrivacyCurrency"),
+  privacyIpToggleEl: document.getElementById("togglePrivacyIp"),
   templatesBackBtnEl: document.getElementById("templatesBackBtn"),
   templatesGridEl: document.getElementById("templatesGrid"),
 });
@@ -53,6 +61,11 @@ appsToggleEl?.addEventListener("click", () => {
 
 settingsToggleEl?.addEventListener("click", () => {
   appsMenu.closeAppsMenu();
+});
+
+initPrivacyBanner({
+  bannerEl: document.getElementById("privacyBanner"),
+  acceptBtnEl: document.getElementById("privacyAcceptBtn"),
 });
 
 window.addEventListener(LANGUAGE_CHANGE_EVENT, () => {

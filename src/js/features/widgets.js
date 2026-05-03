@@ -6,6 +6,7 @@ import {
   WIDGETS_ORDER_KEY,
 } from "../config/constants.js";
 import { getCurrentLanguage, LANGUAGE_CHANGE_EVENT, t } from "../i18n.js";
+import { isPrivacyFeatureEnabled, PRIVACY_SETTINGS_EVENT } from "./privacy.js";
 import { WIDGETS_VISIBILITY_EVENT } from "./settings.js";
 import {
   animateNeighborShift,
@@ -52,6 +53,17 @@ export function initWidgets({
     }
   });
 
+  window.addEventListener(PRIVACY_SETTINGS_EVENT, () => {
+    if (!isWidgetsVisible()) return;
+    if (!widgetsDataLoaded) {
+      loadWidgetsData();
+      return;
+    }
+    void loadWeather(lastWeatherCity || savedCity, { force: true });
+    void loadCurrency();
+    void loadIpInfo({ force: true });
+  });
+
   window.addEventListener(LANGUAGE_CHANGE_EVENT, () => {
     if (weatherCityInputEl) weatherCityInputEl.placeholder = t("widgets.cityPlaceholder");
     if (lastWeatherPayload) renderWeatherPayload(lastWeatherPayload, lastWeatherCity);
@@ -89,6 +101,11 @@ export function initWidgets({
 
   async function loadWeather(city, { force = false } = {}) {
     if (!weatherContentEl) return;
+    if (!isPrivacyFeatureEnabled("weather")) {
+      weatherContentEl.textContent = t("privacy.disabledInSettings");
+      applyWeatherVisualState(weatherContentEl, null);
+      return;
+    }
     const normalizedCity = sanitizeWeatherCityQuery(city) || city;
     const cityKey = normalizeCityQuery(normalizedCity);
     if (!force) {
@@ -197,6 +214,10 @@ export function initWidgets({
 
   async function loadCurrency() {
     if (!currencyContentEl) return;
+    if (!isPrivacyFeatureEnabled("currency")) {
+      currencyContentEl.textContent = t("privacy.disabledInSettings");
+      return;
+    }
     const cached = readCachedValue(CURRENCY_CACHE_KEY, CURRENCY_CACHE_TTL_MS);
     if (cached) {
       renderCurrencyPayload(cached);
@@ -243,6 +264,10 @@ export function initWidgets({
 
   async function loadIpInfo({ force = false } = {}) {
     if (!ipContentEl) return;
+    if (!isPrivacyFeatureEnabled("ipWidget")) {
+      ipContentEl.textContent = t("privacy.disabledInSettings");
+      return;
+    }
     ipContentEl.textContent = t("widgets.loadingIp");
 
     try {

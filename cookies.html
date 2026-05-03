@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cookies и localStorage</title>
+    <style>
+      :root { color-scheme: dark; }
+      body {
+        margin: 0;
+        font-family: Inter, Roboto, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #0b1220;
+        color: #e8eefc;
+      }
+      .wrap {
+        max-width: 920px;
+        margin: 0 auto;
+        padding: 24px 18px 40px;
+      }
+      h1 { margin: 0 0 12px; font-size: 32px; }
+      h2 { margin: 26px 0 10px; font-size: 22px; }
+      p, li, td { line-height: 1.6; color: #d7e2f9; }
+      a { color: #a9c4ff; }
+      table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+      th, td { border: 1px solid rgba(162, 185, 230, 0.28); padding: 8px 10px; text-align: left; vertical-align: top; }
+      th { color: #f0f5ff; background: rgba(23, 37, 64, 0.6); }
+      .meta { color: #9db0d8; font-size: 14px; }
+      .box {
+        margin-top: 18px;
+        padding: 14px 16px;
+        border-radius: 12px;
+        border: 1px solid rgba(165, 188, 235, 0.34);
+        background: rgba(17, 29, 52, 0.45);
+      }
+      .nav { margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap; }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <h1>Cookies и localStorage</h1>
+      <p class="meta">Последнее обновление: 3 мая 2026</p>
+
+      <h2>1. Что такое cookies</h2>
+      <p>
+        Cookies представляют собой небольшие файлы, сохраняемые браузером при посещении сайтов для поддержания состояния сессии и параметров работы интерфейса.
+        В рамках данного проекта основной механизм хранения пользовательских параметров реализован через localStorage и кеш браузера.
+      </p>
+
+      <h2>2. Что такое localStorage</h2>
+      <p>
+        localStorage — это локальное хранилище браузера, предназначенное для сохранения данных на устройстве пользователя.
+        Использование localStorage позволяет сохранять пользовательские настройки между сеансами работы с сайтом.
+      </p>
+
+      <h2>3. Какие ключи localStorage используются</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Ключ</th>
+            <th>Что хранится</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>chrome-clone-page-settings-v1</td><td>Параметры интерфейса: тема, язык, видимость шорткатов и виджетов.</td></tr>
+          <tr><td>chrome-clone-privacy-settings-v1</td><td>Параметры конфиденциальности: разрешение на Google Suggest, погодный, валютный и IP-виджеты.</td></tr>
+          <tr><td>chrome-clone-privacy-consent-v1</td><td>Фиксация выбора пользователя в privacy-баннере.</td></tr>
+          <tr><td>chrome-clone-shortcuts-v1</td><td>Пользовательские шорткаты и их порядок.</td></tr>
+          <tr><td>chrome-clone-search-history-v1</td><td>Локальная история поисковых запросов.</td></tr>
+          <tr><td>chrome-clone-weather-city-v1</td><td>Выбранный пользователем город для погодного виджета.</td></tr>
+          <tr><td>chrome-clone-widgets-order-v1</td><td>Порядок расположения виджетов.</td></tr>
+          <tr><td>chrome-clone-background-image-v1</td><td>Пользовательское изображение фона.</td></tr>
+          <tr><td>chrome-clone-background-template-v1</td><td>Выбранный шаблон фонового изображения.</td></tr>
+          <tr><td>chrome-clone-weather-cache-v2</td><td>Локальный кеш погодных данных.</td></tr>
+          <tr><td>chrome-clone-currency-cache-v1</td><td>Локальный кеш курсов валют.</td></tr>
+          <tr><td>chrome-clone-ip-cache-v1</td><td>Локальный кеш данных IP/региона.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>4. Cache Storage и Service Worker</h2>
+      <p>
+        Сайт использует Service Worker (`./sw.js`) и Cache Storage для кеширования статических ресурсов (HTML, CSS, JS, изображения, иконки) с целью ускорения повторной загрузки страниц.
+      </p>
+      <p>
+        Персональные пользовательские настройки, перечисленные в разделе localStorage, не сохраняются в Cache Storage в виде отдельных приватных записей.
+      </p>
+
+      <h2>5. Внешние сервисы и какие данные могут передаваться</h2>
+      <ul>
+        <li>Google Suggest — текст поискового запроса.</li>
+        <li>Open-Meteo / geocoding — название города или координаты для формирования прогноза.</li>
+        <li>CBR API — запрос данных по курсам валют.</li>
+        <li>IP/geo API — IP-адрес и технические параметры запроса для определения региона.</li>
+      </ul>
+      <p>
+        Указанные обращения выполняются исключительно в рамках соответствующих функций сайта и могут быть отключены пользователем в настройках конфиденциальности.
+      </p>
+
+      <h2>6. Как удалить данные</h2>
+      <ul>
+        <li>В интерфейсе сайта доступна функция полной очистки пользовательских данных.</li>
+        <li>Также данные могут быть удалены вручную в настройках браузера (cookies, localStorage, cache, Service Worker).</li>
+      </ul>
+
+      <div class="box">
+        Данный документ носит информационный характер и не является юридической консультацией.
+      </div>
+
+      <div class="nav">
+        <a href="./index.html">← На главную</a>
+        <a href="./privacy.html">Политика конфиденциальности</a>
+      </div>
+    </main>
+  </body>
+</html>

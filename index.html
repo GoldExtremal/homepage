@@ -33,14 +33,6 @@
         }
       })();
     </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="preload"
-      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap"
-      as="style"
-      onload="this.onload=null;this.rel='stylesheet'"
-    />
     <link rel="stylesheet" href="./src/styles/main.css" />
     <link
       rel="preload"
@@ -49,7 +41,6 @@
       onload="this.onload=null;this.rel='stylesheet';document.documentElement.classList.remove('deferred-css-loading')"
     />
     <noscript>
-      <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet" />
       <link rel="stylesheet" href="./src/styles/main.css" />
       <link rel="stylesheet" href="./src/styles/deferred.css" />
     </noscript>
@@ -98,6 +89,9 @@
             </span>
           </label>
         </div>
+        <button id="openPrivacyMenuBtn" class="settings-action-btn" type="button" data-i18n="settings.privacy">Конфиденциальность</button>
+        <button id="clearSearchHistoryBtn" class="settings-action-btn" type="button" data-i18n="settings.clearSearchHistory">Очистить историю поиска</button>
+        <div class="settings-subheading" data-i18n="settings.background">Фон</div>
         <div class="settings-item">
           <span data-i18n="settings.darkMode">Тёмная тема</span>
           <label class="toggle" for="toggleDarkMode" aria-label="Переключить тему" data-i18n-aria-label="settings.toggleDarkModeAria">
@@ -105,8 +99,6 @@
             <span class="toggle-track"></span>
           </label>
         </div>
-        <button id="clearSearchHistoryBtn" class="settings-action-btn" type="button" data-i18n="settings.clearSearchHistory">Очистить историю поиска</button>
-        <div class="settings-subheading" data-i18n="settings.background">Фон</div>
         <button id="setCustomBackgroundBtn" class="settings-action-btn" type="button" data-i18n="settings.setCustomBackground">Установить свой фон</button>
         <button id="chooseTemplateBtn" class="settings-action-btn" type="button" data-i18n="settings.chooseTemplate">Выбрать шаблон</button>
         <button id="resetBackgroundBtn" class="settings-action-btn" type="button" data-i18n="settings.resetBackground">Сбросить фон</button>
@@ -138,6 +130,42 @@
           </svg>
         </button>
         <div id="templatesGrid" class="templates-grid" aria-label="Template backgrounds"></div>
+      </div>
+      <div id="privacyMenu" class="overlay-menu settings-menu privacy-menu" role="menu" aria-label="Настройки конфиденциальности">
+        <h3 data-i18n="settings.privacy">Конфиденциальность</h3>
+        <button id="privacyBackBtn" class="settings-action-btn templates-back-btn" type="button" aria-label="Назад к настройкам" data-i18n-aria-label="settings.backToSettingsAria">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M14.5 6.5L9 12l5.5 5.5" />
+          </svg>
+        </button>
+        <div class="settings-item">
+          <span data-i18n="settings.privacySearchSuggest">Поисковые подсказки Google Suggest</span>
+          <label class="toggle" for="togglePrivacySuggest" aria-label="Поисковые подсказки Google Suggest">
+            <input id="togglePrivacySuggest" type="checkbox" checked />
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <div class="settings-item">
+          <span data-i18n="settings.privacyWeather">Виджет погоды (внешний API)</span>
+          <label class="toggle" for="togglePrivacyWeather" aria-label="Виджет погоды">
+            <input id="togglePrivacyWeather" type="checkbox" checked />
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <div class="settings-item">
+          <span data-i18n="settings.privacyCurrency">Виджет валют (внешний API)</span>
+          <label class="toggle" for="togglePrivacyCurrency" aria-label="Виджет валют">
+            <input id="togglePrivacyCurrency" type="checkbox" checked />
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <div class="settings-item">
+          <span data-i18n="settings.privacyIp">IP/регион виджет (внешний API)</span>
+          <label class="toggle" for="togglePrivacyIp" aria-label="IP регион">
+            <input id="togglePrivacyIp" type="checkbox" checked />
+            <span class="toggle-track"></span>
+          </label>
+        </div>
       </div>
       <div id="appsMenu" class="overlay-menu apps-menu" role="menu" aria-label="Сервисы Google" data-i18n-aria-label="apps.menuAria"></div>
       <main class="hero">
@@ -197,9 +225,26 @@
             <div id="ipContent" class="widget-content" data-i18n="widgets.loadingIp">Загружаю IP...</div>
           </article>
         </section>
+        <footer class="legal-footer">
+          <a href="./privacy.html" data-i18n="legal.privacy">Политика конфиденциальности</a>
+          <a href="./cookies.html" data-i18n="legal.cookies">Cookies и localStorage</a>
+        </footer>
       </main>
 
     </div>
+
+    <aside id="privacyBanner" class="privacy-banner" hidden>
+      <p>
+        <span data-i18n="banner.part1">Сайт использует localStorage, кеш браузера и может обращаться к внешним сервисам для работы поиска, погоды, валют и IP-виджета.</span>
+        <span data-i18n="banner.part2">Продолжая использовать сайт, вы соглашаетесь с</span>
+        <a href="./privacy.html" data-i18n="banner.privacyLink">Политикой конфиденциальности</a>
+        <span data-i18n="banner.part3">и</span>
+        <a href="./cookies.html" data-i18n="banner.cookiesLink">условиями использования cookies/localStorage</a>.
+      </p>
+      <div class="privacy-banner-actions">
+        <button id="privacyAcceptBtn" type="button" data-i18n="banner.accept">Согласен</button>
+      </div>
+    </aside>
 
     <dialog id="shortcutDialog" class="shortcut-dialog">
       <form id="shortcutForm" class="dialog-form" method="dialog" autocomplete="off">
