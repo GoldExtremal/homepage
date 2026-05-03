@@ -29,8 +29,11 @@ export const RESETTABLE_STORAGE_KEYS = [
 ];
 
 export const DEFAULT_SHORTCUTS = [
-  { name: "ChatGPT", url: "https://chatgpt.com/" },
-  { name: "YouTube", url: "https://www.youtube.com/" },
+  { name: "ВК", url: "https://vk.com/" },
+  {
+    name: "Start",
+    url: "https://start.ru/",
+  },
   { name: "Музыка", url: "https://music.yandex.ru/" },
-  { name: "Amnezia", url: "https://amnezia.org/" },
+  { name: "Ozon", url: "https://www.ozon.ru/" },
 ];
