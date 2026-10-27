@@ -255,8 +255,8 @@ export function initWidgets({
     currencyContentEl.innerHTML = `
       <div class="currency-grid">
         ${renderCurrencyRow("$", payload.usd)}
-        ${renderCurrencyRow("֏", payload.amd)}
-        ${renderCurrencyRow("₸", payload.kzt)}
+        ${renderCurrencyRow("֏", invertCurrencyRate(payload.amd), "֏")}
+        ${renderCurrencyRow("₸", invertCurrencyRate(payload.kzt), "₸")}
       </div>
       <span class="sub">${t("widgets.updatedAt", { time: refreshedAt })}</span>
     `;
@@ -1053,10 +1053,18 @@ function normalizeCbrRate(item) {
   };
 }
 
-function renderCurrencyRow(symbol, item) {
+// Converts "RUB per 1 unit" into "units per 1 RUB", recomputing the delta from the previous rate.
+function invertCurrencyRate(item) {
+  const value = 1 / item.value;
+  const previousRaw = item.value - item.delta;
+  const delta = previousRaw > 0 ? value - 1 / previousRaw : 0;
+  return { code: item.code, value, delta };
+}
+
+function renderCurrencyRow(symbol, item, unit = "₽") {
   const trend = item.delta > 0 ? "up" : item.delta < 0 ? "down" : "flat";
   const deltaSign = item.delta > 0 ? "+" : "";
-  const deltaText = `${deltaSign}${item.delta.toFixed(2)} ₽`;
+  const deltaText = `${deltaSign}${item.delta.toFixed(2)} ${unit}`;
 
   return `
     <div class="currency-row ${trend}">
@@ -1065,7 +1073,7 @@ function renderCurrencyRow(symbol, item) {
         <span class="currency-code">${item.code}</span>
       </div>
       <div class="currency-right">
-        <span class="currency-value">${item.value.toFixed(2)} ₽</span>
+        <span class="currency-value">${item.value.toFixed(2)} ${unit}</span>
         <span class="currency-delta">${deltaText}</span>
       </div>
     </div>
