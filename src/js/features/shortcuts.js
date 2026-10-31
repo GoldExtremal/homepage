@@ -1,4 +1,4 @@
-import { DEFAULT_SHORTCUTS, MAX_SHORTCUTS, SHORTCUTS_STORAGE_KEY } from "../config/constants.js";
+import { DEFAULT_SHORTCUTS, MAX_SHORTCUTS, SHORTCUT_ICONS_CACHE, SHORTCUTS_STORAGE_KEY } from "../config/constants.js";
 import { LANGUAGE_CHANGE_EVENT, t } from "../i18n.js";
 import {
   extractRootDomain,
@@ -568,6 +568,7 @@ function createFaviconImage(rawUrl, iconOverride = "") {
   let index = 0;
   img.src = candidates[index];
   img.addEventListener("error", () => {
+    forgetCachedIcon(img.src);
     index += 1;
     if (index < candidates.length) {
       img.src = candidates[index];
@@ -577,6 +578,17 @@ function createFaviconImage(rawUrl, iconOverride = "") {
   });
 
   return img;
+}
+
+// Service Worker кеширует и непрозрачные ответы, поэтому неудачную иконку убираем из кеша вручную.
+function forgetCachedIcon(src) {
+  if (!("caches" in window) || !src) return;
+  caches
+    .open(SHORTCUT_ICONS_CACHE)
+    .then((cache) => cache.delete(src))
+    .catch(() => {
+      // ignore cache failures in unsupported/private modes
+    });
 }
 
 function getFaviconCandidates(rawUrl, iconOverride = "") {

@@ -1,5 +1,9 @@
-const SW_VERSION = "v1.0.0";
+const SW_VERSION = "v1.1.0";
 const STATIC_CACHE = `homepage-static-${SW_VERSION}`;
+// Иконки шорткатов с внешних доменов: отдаются из кеша без повторной загрузки.
+// Имя совпадает с SHORTCUT_ICONS_CACHE в src/js/config/constants.js.
+const ICONS_CACHE = "homepage-icons-v1";
+const ICONS_CACHE_LIMIT = 100;
 
 const CORE_ASSETS = [
   "./",
@@ -34,7 +38,10 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
   const url = new URL(request.url);
 
-  if (url.origin !== self.location.origin) return;
+  if (url.origin !== self.location.origin) {
+    if (request.destination === "image") event.respondWith(respondWithCachedIcon(request));
+    return;
+  }
 
   const isStaticRequest =
     request.destination === "document" ||
@@ -61,3 +68,23 @@ self.addEventListener("fetch", (event) => {
     })
   );
 });
+
+async function respondWithCachedIcon(request) {
+  const cache = await caches.open(ICONS_CACHE);
+  const cached = await cache.match(request);
+  if (cached) return cached;
+
+  const response = await fetch(request);
+  // Ответы без CORS непрозрачны (status 0): сохраняем и их, а битую иконку страница удаляет из кеша сама.
+  if (response.ok || response.type === "opaque") {
+    await cache.put(request, response.clone());
+    trimIconsCache(cache);
+  }
+  return response;
+}
+
+async function trimIconsCache(cache) {
+  const keys = await cache.keys();
+  const excess = keys.length - ICONS_CACHE_LIMIT;
+  if (excess > 0) await Promise.all(keys.slice(0, excess).map((key) => cache.delete(key)));
+}
