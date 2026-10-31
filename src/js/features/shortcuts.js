@@ -235,7 +235,7 @@ export function initShortcuts({
 
     event.preventDefault();
     moveFloatingTile(event.clientX, event.clientY);
-    moveDuringDrag(event.clientX);
+    moveDuringDrag(event.clientX, event.clientY);
   }
 
   function handlePointerEnd(event) {
@@ -399,7 +399,7 @@ export function initShortcuts({
     });
   }
 
-  function moveDuringDrag(pointerX) {
+  function moveDuringDrag(pointerX, pointerY) {
     if (!draggedTile || !placeholderTile) return;
     const now = performance.now();
     if (now < nextReorderAllowedAt) return;
@@ -410,12 +410,14 @@ export function initShortcuts({
 
     const prevTile = getAdjacentShortcutTile(placeholderTile, -1);
     const nextTile = getAdjacentShortcutTile(placeholderTile, 1);
+    const placeholderRect = placeholderTile.getBoundingClientRect();
+    const isSameRow = (rect) => Math.abs(rect.top - placeholderRect.top) < rect.height / 2;
     let targetTile = null;
     let nextIndex = fromIndex;
 
     if (nextTile) {
       const rect = nextTile.getBoundingClientRect();
-      if (pointerX > rect.left + rect.width * 0.6) {
+      if (isSameRow(rect) && pointerX > rect.left + rect.width * 0.6) {
         targetTile = nextTile;
         nextIndex = fromIndex + 1;
       }
@@ -423,26 +425,44 @@ export function initShortcuts({
 
     if (!targetTile && prevTile) {
       const rect = prevTile.getBoundingClientRect();
-      if (pointerX < rect.left + rect.width * 0.4) {
+      if (isSameRow(rect) && pointerX < rect.left + rect.width * 0.4) {
         targetTile = prevTile;
         nextIndex = fromIndex - 1;
       }
     }
 
+    // Переход в другой ряд: берём тайл, над которым находится курсор.
+    const orderedTiles = getShortcutTiles();
+    if (!targetTile && (pointerY < placeholderRect.top || pointerY > placeholderRect.bottom)) {
+      targetTile =
+        orderedTiles.find((node) => {
+          if (node === placeholderTile) return false;
+          const rect = node.getBoundingClientRect();
+          return pointerX >= rect.left && pointerX <= rect.right && pointerY >= rect.top && pointerY <= rect.bottom;
+        }) || null;
+      if (targetTile) nextIndex = orderedTiles.indexOf(targetTile);
+    }
+
     if (!targetTile) return;
     if (nextIndex < 0 || nextIndex >= shortcuts.length) return;
 
-    stopNeighborAnimations(getRealShortcutTiles(), activeNeighborAnimations);
-    const neighborBeforeRect = targetTile.getBoundingClientRect();
+    const realTiles = getRealShortcutTiles();
+    const shiftedTiles = orderedTiles.filter((node, idx) => {
+      return node !== placeholderTile && idx >= Math.min(fromIndex, nextIndex) && idx <= Math.max(fromIndex, nextIndex);
+    });
+    stopNeighborAnimations(realTiles, activeNeighborAnimations);
+    const beforeRects = shiftedTiles.map((node) => node.getBoundingClientRect());
     moveShortcutItem(fromIndex, nextIndex);
     movePlaceholderNode(placeholderTile, targetTile, fromIndex, nextIndex);
     placeholderTile.dataset.index = String(nextIndex);
     updateShortcutIndexes();
-    animateNeighborShift({
-      node: targetTile,
-      beforeRect: neighborBeforeRect,
-      animations: activeNeighborAnimations,
-      duration: REORDER_ANIMATION_MS,
+    shiftedTiles.forEach((node, idx) => {
+      animateNeighborShift({
+        node,
+        beforeRect: beforeRects[idx],
+        animations: activeNeighborAnimations,
+        duration: REORDER_ANIMATION_MS,
+      });
     });
     hasDragReordered = true;
     nextReorderAllowedAt = now + REORDER_STEP_MS;
