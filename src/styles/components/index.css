@@ -100,9 +100,9 @@
   min-width: 0;
 }
 
-/* Не больше 5 тайлов в ряд: 5 × 122px + 4 × 8px. */
+/* Не больше 7 тайлов в ряд: 7 × 122px + 6 × 8px. */
 .shortcuts {
-  width: min(100%, 642px);
+  width: min(100%, 902px);
   list-style: none;
   margin: 18px 0 0;
   padding: 0;

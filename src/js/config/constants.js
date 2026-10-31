@@ -1,5 +1,5 @@
 export const SHORTCUTS_STORAGE_KEY = "chrome-clone-shortcuts-v1";
-export const MAX_SHORTCUTS = 10;
+export const MAX_SHORTCUTS = 14;
 export const WEATHER_CITY_KEY = "chrome-clone-weather-city-v1";
 export const WIDGETS_ORDER_KEY = "chrome-clone-widgets-order-v1";
 export const SUGGEST_ENDPOINT = "https://suggestqueries.google.com/complete/search";
