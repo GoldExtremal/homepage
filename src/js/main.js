@@ -1,4 +1,5 @@
 import { initAppsMenu } from "./features/appsMenu.js";
+import { initFallingLeaves } from "./features/fallingLeaves.js";
 import { renderGoogleServicesMenu } from "./features/googleServicesMenu.js";
 import { initSearch } from "./features/search.js";
 import { initPrivacyBanner } from "./features/privacy.js";
@@ -154,3 +155,5 @@ requestAnimationFrame(() => {
     document.documentElement.classList.remove("booting");
   });
 });
+
+initFallingLeaves();

@@ -1,4 +1,4 @@
-const SW_VERSION = "v1.1.0";
+const SW_VERSION = "v1.2.0";
 const STATIC_CACHE = `homepage-static-${SW_VERSION}`;
 // Иконки шорткатов с внешних доменов: отдаются из кеша без повторной загрузки.
 // Имя совпадает с SHORTCUT_ICONS_CACHE в src/js/config/constants.js.
@@ -11,6 +11,9 @@ const CORE_ASSETS = [
   "./src/styles/main.css",
   "./src/styles/deferred.css",
   "./src/js/main.js",
+  "./src/js/features/fallingLeaves.js",
+  "./src/vendor/falling-leaves/index.js",
+  "./src/vendor/falling-leaves/chunk-QW2AVYVP.js",
   "./assets/icons/chrome-icon.ico",
   "./assets/icons/gmail-icon.svg",
 ];
