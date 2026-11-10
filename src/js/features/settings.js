@@ -31,7 +31,7 @@ const DEFAULT_SETTINGS = {
 const TEMPLATE_BACKGROUNDS = [
   { id: "anime-neon", fullSrc: "./assets/templates/full/anime-neon.webp", thumbSrc: "./assets/templates/thumb/anime-neon.webp", darkTheme: true },
   { id: "beach", fullSrc: "./assets/templates/full/beach.webp", thumbSrc: "./assets/templates/thumb/beach.webp", darkTheme: true },
-  { id: "city-wallpaper", fullSrc: "./assets/templates/full/city-wallpaper.webp", thumbSrc: "./assets/templates/thumb/city-wallpaper.webp", darkTheme: false },
+  { id: "autumn-hut", fullSrc: "./assets/templates/full/autumn-hut.webp", thumbSrc: "./assets/templates/thumb/autumn-hut.webp", darkTheme: true },
   { id: "field", fullSrc: "./assets/templates/full/field.webp", thumbSrc: "./assets/templates/thumb/field.webp", darkTheme: true },
   { id: "grass", fullSrc: "./assets/templates/full/grass.webp", thumbSrc: "./assets/templates/thumb/grass.webp", darkTheme: false },
   { id: "light", fullSrc: "./assets/templates/full/light.webp", thumbSrc: "./assets/templates/thumb/light.webp", darkTheme: false },
